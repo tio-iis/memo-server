@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -39,8 +40,15 @@ type Memo struct {
 	UpdatedAt time.Time
 }
 
-var memos map[string]Memo
+var memos map[string]*Memo
 
+//curl -X POST -H "Content-Type: application/json" -d '{"ID":"tio"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, htmlStr)
+	m := &Memo{}
+	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
+		fmt.Fprintln(w, err.Error())
+		return
+	}
+
+	fmt.Fprintln(w, m.ID)
 }
