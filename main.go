@@ -44,7 +44,7 @@ type Memo struct {
 //Memo構造体をポインタ型として定義しています。
 var memos map[string]*Memo
 
-//curl -X POST -H "Content-Type: application/json" -d '{"ID":"tio"}' localhost:8080/add_memo
+//curl -X POST -H "Content-Type: application/json" -d '{"ID":"1111","Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01 10:00:00","UpdatedAt":"2022-01-01 11:00:00"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
 	//*を付けると、その型をポインタ型として定義できる。
 	//ポインタ型の変数を生成するには&を付ける必要がある。
@@ -54,10 +54,10 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//HTTPリクエストで送信されてきた HTTP Request Body(JSON形式)を
 	//Memo構造体にセットしている。
 	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
-		fmt.Fprintln(w, err.Error())
+		fmt.Fprintln(w, "error:"+err.Error())
 		return
 	}
 
 	//HTTP Response として出力する
-	fmt.Fprintln(w, m.ID)
+	fmt.Fprintln(w, m)
 }
