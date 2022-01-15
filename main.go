@@ -32,6 +32,7 @@ func showScreen(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, htmlStr)
 }
 
+//構造体自体の定義は*を付けることはできません。
 type Memo struct {
 	ID        string
 	Title     string
@@ -40,15 +41,23 @@ type Memo struct {
 	UpdatedAt time.Time
 }
 
+//Memo構造体をポインタ型として定義しています。
 var memos map[string]*Memo
 
 //curl -X POST -H "Content-Type: application/json" -d '{"ID":"tio"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
+	//*を付けると、その型をポインタ型として定義できる。
+	//ポインタ型の変数を生成するには&を付ける必要がある。
+	//var m *Memo = &Memo{}
 	m := &Memo{}
+
+	//HTTPリクエストで送信されてきた HTTP Request Body(JSON形式)を
+	//Memo構造体にセットしている。
 	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
 		fmt.Fprintln(w, err.Error())
 		return
 	}
 
+	//HTTP Response として出力する
 	fmt.Fprintln(w, m.ID)
 }
