@@ -45,7 +45,7 @@ type Memo struct {
 //Memo構造体をポインタ型として定義しています。
 var memos map[string]*Memo = map[string]*Memo{}
 
-//curl -X POST -H "Content-Type: application/json" -d '{"ID":"1111","Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01 10:00:00","UpdatedAt":"2022-01-01 11:00:00"}' localhost:8080/add_memo
+//curl -X POST -H "Content-Type: application/json" -d '{"ID":"1111","Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
 	//*を付けると、その型をポインタ型として定義できる。
 	//ポインタ型の変数を生成するには&を付ける必要がある。
