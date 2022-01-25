@@ -225,6 +225,22 @@
 
       editModal.show()
     })
+
+    //メモをバックエンドサーバに送信する
+    const req = new XMLHttpRequest()
+    req.addEventListener("load", () => {
+        console.log(req.responseText)
+    })
+    req.open("POST", "http://localhost:8080/add_memo")
+    req.setRequestHeader("Content-Type", "application/json")
+    const httpBody = {
+      ID: memoId,
+	    Title: title,
+	    Body: body,
+	    CreatedAt: now.toISOString(),
+	    UpdatedAt: now.toISOString()
+    }
+    req.send(JSON.stringify(httpBody))
     addModal.hide()
   })
 
