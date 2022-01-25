@@ -14,14 +14,6 @@ var htmlStr string
 func main() {
 	fmt.Println("start")
 
-	data, err := os.ReadFile("index.html")
-	if err != nil {
-		//ファイルが見つからない場合
-		log.Fatal(err)
-	}
-
-	htmlStr = string(data)
-
 	//http://localhost:8080/
 	http.HandleFunc("/", showHTML)
 	http.HandleFunc("/add_memo", addMemo)
@@ -31,12 +23,20 @@ func main() {
 
 // curl localhost:8080/
 func showHTML(w http.ResponseWriter, r *http.Request) {
+	data, err := os.ReadFile("index.html")
+	if err != nil {
+		//ファイルが見つからない場合
+		log.Fatal(err)
+	}
+
+	htmlStr = string(data)
+
 	fmt.Fprintln(w, htmlStr)
 }
 
 //構造体自体の定義は*を付けることはできません。
 type Memo struct {
-	ID        string
+	ID        int
 	Title     string
 	Body      string
 	CreatedAt time.Time
@@ -44,7 +44,7 @@ type Memo struct {
 }
 
 //Memo構造体をポインタ型として定義しています。
-var memos map[string]*Memo = map[string]*Memo{}
+var memos map[int]*Memo = map[int]*Memo{}
 
 //メモを登録する。
 //curl -X POST -H "Content-Type: application/json" -d '{"ID":"1111","Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
