@@ -189,7 +189,7 @@
     }
 
     const now = dayjs()
-    const createdAt = now.format("YYYY-MMM-DD HH:mm:ss")
+    const createdAt = now.format("YYYY-MM-DD HH:mm:ss")
     const updatedAt = "なし"
     const memoId = now.valueOf()
 
@@ -237,9 +237,10 @@
       ID: memoId,
 	    Title: title,
 	    Body: body,
-	    CreatedAt: now.toISOString(),
-	    UpdatedAt: now.toISOString()
+	    CreatedAt: now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00",
+	    UpdatedAt: now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
     }
+
     req.send(JSON.stringify(httpBody))
     addModal.hide()
   })
