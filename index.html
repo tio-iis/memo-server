@@ -148,7 +148,49 @@
     //取得したメモ一覧をHTMLにしていく。
     console.log(req.responseText)
     const memos = JSON.parse(req.responseText)
-    console.log(memos)
+    console.log(Object.values(memos))
+
+    Object.values(memos).forEach((memo) => {
+      const title = memo.Title
+      const body = memo.Body
+
+      const createdAt = memo.CreatedAt
+      const updatedAt = memo.UpdatedAt
+      const memoId = memo.ID
+
+      const tr = document.createElement("tr")
+      tr.setAttribute("id", memoId)
+
+      const editButtonId = "id-edit-button-" + memoId
+      const idTitleInList = createTitleInMemoListId(memoId)
+      const updatedAtId = createUpdatedAtId(memoId)
+
+      tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td>' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+      memoList.appendChild(tr)
+
+      const inputForBody = document.createElement("input")
+      inputForBody.setAttribute("id", createBodyInListId(memoId))
+      inputForBody.setAttribute("type", "hidden")
+      inputForBody.value = body
+      tr.appendChild(inputForBody)
+
+      const editButton = document.getElementById(editButtonId)
+      editButton.addEventListener("click", (event) => {
+        validationErrorInEditModal.style.display = "none"
+        validationErrorInEditModal.innerHTML = ""
+
+        const memoId = event.currentTarget.dataset.memoId
+        memoIdInEditModal.value = memoId
+
+        const title = getIdTitleInMemoList(memoId).innerText
+        titleInEditModal.value = title
+
+        const body = getIdBodyInlist(memoId).value
+        bodyInEditModal.value = body
+
+        editModal.show()
+      })
+    })
   })
   req.open("GET", "http://localhost:8080/list_memos")
   req.setRequestHeader("Content-Type", "application/json")
