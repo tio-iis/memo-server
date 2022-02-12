@@ -168,8 +168,9 @@
       const editButtonId = "id-edit-button-" + memoId
       const idTitleInList = createTitleInMemoListId(memoId)
       const updatedAtId = createUpdatedAtId(memoId)
+      const createdAtId = createCreatedAtInMemoListId(memoId)
 
-      tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td>' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+      tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
       memoList.appendChild(tr)
 
       const inputForBody = document.createElement("input")
@@ -231,6 +232,11 @@
     return true
   }
 
+  function now() {
+    const now = dayjs()
+    return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
+  }
+
   const addButtonInModal = document.getElementById("id-add-modal-button")
   addButtonInModal.addEventListener("click", (event) => {
     const title = titleInAddModal.value
@@ -240,10 +246,9 @@
       return
     }
 
-    const now = dayjs()
-    const createdAt = now.format("YYYY-MM-DD HH:mm:ss")
+    const createdAt = now()
     const updatedAt = "なし"
-    const memoId = now.valueOf()
+    const memoId = dayjs().valueOf()
 
     const tr = document.createElement("tr")
     tr.setAttribute("id", memoId)
@@ -253,7 +258,7 @@
     const updatedAtId = createUpdatedAtId(memoId)
     const createdAtId = createCreatedAtInMemoListId(memoId)
 
-    tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id=' + createdAtId + '>' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+    tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
     memoList.appendChild(tr)
 
     const inputForBody = document.createElement("input")
@@ -290,8 +295,8 @@
       ID: memoId,
       Title: title,
       Body: body,
-      CreatedAt: now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00",
-      UpdatedAt: now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
+      CreatedAt: createdAt,
+      UpdatedAt: createdAt
     }
 
     req.send(JSON.stringify(httpBody))
@@ -351,10 +356,11 @@
     //本文
     getIdBodyInlist(memoId).value = body
 
-    const updatedAt = dayjs()
-    document.getElementById(createUpdatedAtId(memoId)).innerText = updatedAt.format("YYYY-MM-DD HH:mm:ss")
+    const updatedAt = now()
+    document.getElementById(createUpdatedAtId(memoId)).innerText = updatedAt
 
-    const createdAt = document.getElementById(createCreatedAtInMemoListId(memoId)).innerText
+    const createdAtElm = document.getElementById(createCreatedAtInMemoListId(memoId))
+    const createdAt = createdAtElm.innerText
 
     const req = new XMLHttpRequest()
     req.addEventListener("load", () => {
@@ -363,16 +369,13 @@
     req.open("POST", "http://localhost:8080/add_memo")
     req.setRequestHeader("Content-Type", "application/json")
     const httpBody = {
-      ID: memoId,
+      ID: Number(memoId),
       Title: title,
       Body: body,
-      CreatedAt: now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00",
-      UpdatedAt: updatedAt.format("YYYY-MM-DD") + "T" + updatedAt.format("HH:mm:ss") + "+09:00"
+      CreatedAt: createdAt,
+      UpdatedAt: updatedAt
     }
-
     req.send(JSON.stringify(httpBody))
-    addModal.hide()
-
 
     editModal.hide()
   })
