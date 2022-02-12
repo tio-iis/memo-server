@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,6 +20,7 @@ func main() {
 	http.HandleFunc("/", showHTML)
 	http.HandleFunc("/add_memo", addMemo)
 	http.HandleFunc("/list_memos", listMemos)
+	http.HandleFunc("/delete_memos", deleteMemos)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -47,7 +50,7 @@ type Memo struct {
 var memos map[int]*Memo = map[int]*Memo{}
 
 //メモを登録する。
-//curl -X POST -H "Content-Type: application/json" -d '{"ID":"1111","Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
+//curl -X POST -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
 	//*を付けると、その型をポインタ型として定義できる。
 	//ポインタ型の変数を生成するには&を付ける必要がある。
@@ -81,4 +84,35 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, string(b))
+}
+
+//メモを削除する
+//curl -X DELETE localhost:8080/delete_memos?id=1111
+func deleteMemos(w http.ResponseWriter, r *http.Request) {
+	//メモが存在しない場合は何もせずに終わる
+	if len(memos) == 0 {
+		fmt.Fprintln(w, "There is not a memo.")
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	ids := strings.Split(id, ",")
+	for _, id := range ids {
+		idInt, err := strconv.Atoi(id)
+		if err != nil {
+			//ID変換でエラーになったら処理を終わる
+			fmt.Fprintln(w, err.Error())
+			return
+		}
+
+		if _, yes := memos[idInt]; !yes {
+			//メモIDが存在しない場合は処理を終わる
+			fmt.Fprintln(w, fmt.Sprintf("not exist memo_id = %d", idInt))
+			return
+		}
+
+		delete(memos, idInt)
+	}
+
+	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
 }
