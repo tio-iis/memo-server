@@ -87,7 +87,7 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 }
 
 //メモを削除する
-//curl -X DELETE localhost:8080/delete_memos?id=1111
+//curl -X DELETE localhost:8080/delete_memos?id=1111,222222,333
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	//メモが存在しない場合は何もせずに終わる
 	if len(memos) == 0 {
