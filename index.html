@@ -146,6 +146,23 @@
     return "class-checkbox"
   }
 
+  class Memo {
+    constructor(title, body) {
+      this.title = title
+      this.body = body
+
+      this.memoId = dayjs().valueOf()
+      const now = getNow()
+      this.createdAt = now
+      this.updatedAt = now
+    }
+  }
+
+  function getNow() {
+    const now = dayjs()
+    return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
+  }
+
   //メモ一覧を表示する
   const req = new XMLHttpRequest()
   req.addEventListener("load", () => {
@@ -232,11 +249,6 @@
     return true
   }
 
-  function now() {
-    const now = dayjs()
-    return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
-  }
-
   const addButtonInModal = document.getElementById("id-add-modal-button")
   addButtonInModal.addEventListener("click", (event) => {
     const title = titleInAddModal.value
@@ -246,7 +258,7 @@
       return
     }
 
-    const createdAt = now()
+    const createdAt = getNow()
     const updatedAt = "なし"
     const memoId = dayjs().valueOf()
 
@@ -365,7 +377,7 @@
     //本文
     getIdBodyInlist(memoId).value = body
 
-    const updatedAt = now()
+    const updatedAt = getNow()
     document.getElementById(createUpdatedAtId(memoId)).innerText = updatedAt
 
     const createdAtElm = document.getElementById(createCreatedAtInMemoListId(memoId))
