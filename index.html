@@ -153,7 +153,7 @@
 
     addMemo(title, body) {
       const memo = new Memo(title, body)
-      memo.showErrorOnAddModal()
+      var errStr = memo.errorStr
 
       if (memoList.children.length > 0) {
         Array.from(memoList.children).forEach((tr) => {
@@ -163,18 +163,24 @@
 
           const t = getIdTitleInMemoList(tr.id).innerText
           if (title == t) {
-            validationErrorInAddModal.innerHTML = "すでに登録済みのタイトルです。<br>"
+            errStr = errStr + "すでに登録済みのタイトルです。<br>"
           }
         })
       }
 
-      if (validationErrorInAddModal.innerHTML.length > 0) {
+      if (errStr.length > 0) {
+        validationErrorInAddModal.innerHTML = errStr
         validationErrorInAddModal.style.display = ""
-        return false
+        return null
       }
+
       this.memos.push(memo)
+      return memo
     }
   }
+
+  //Memosクラスの定義よりも下に書く必要がある。
+  const memos = new Memos()
 
   class Memo {
     constructor(title, body) {
@@ -184,7 +190,7 @@
       }
 
       if (body.length < 1 || body.length > 100) {
-        this.errorStr = errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+        this.errorStr = this.errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
       }
 
       this.title = title
@@ -201,13 +207,6 @@
         return "なし"
       }
       return this.updatedAt
-    }
-    showErrorOnAddModal() {
-      if (this.errorStr.length > 0) {
-        validationErrorInAddModal.innerHTML = this.errorStr
-        return false
-      }
-      return true
     }
   }
 
@@ -273,13 +272,13 @@
 
   function validateMemo(title, body, errorHTMLElement, memoId) {
     errorHTMLElement.innerHTML = ""
-    //if (title.length < 1 || title.length > 30) {
-    //  errorHTMLElement.innerHTML = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-    //}
+    if (title.length < 1 || title.length > 30) {
+      errorHTMLElement.innerHTML = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
+    }
 
-    //if (body.length < 1 || body.length > 100) {
-    //  errorHTMLElement.innerHTML = errorHTMLElement.innerHTML + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-    //}
+    if (body.length < 1 || body.length > 100) {
+      errorHTMLElement.innerHTML = errorHTMLElement.innerHTML + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+    }
 
     //すでに登録済みのタイトルがないかをチェックする
     if (memoList.children.length > 0) {
@@ -308,9 +307,8 @@
     const title = titleInAddModal.value
     const body = bodyInAddModal.value
 
-    const memo = new Memo(title, body)
-
-    if (validateMemo(title, body, validationErrorInAddModal, "0") == false) {
+    const memo = memos.addMemo(title, body)
+    if (memo == null) {
       return
     }
 
