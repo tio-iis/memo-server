@@ -168,6 +168,18 @@
       }
 
       this.memos.push(memo)
+
+      memoList.appendChild(memo.memoHTMLElement)
+
+      //これは最終的には不要になると思います。
+      //HTMLとして本文を保持するための実装です。
+      const inputForBody = document.createElement("input")
+      inputForBody.setAttribute("id", createBodyInListId(memo.id))
+      inputForBody.setAttribute("type", "hidden")
+      inputForBody.value = memo.body
+      tr.appendChild(inputForBody)
+
+
       return memo
     }
   }
@@ -189,10 +201,24 @@
       this.title = title
       this.body = body
 
-      this.memoId = dayjs().valueOf()
+      this.id = dayjs().valueOf()
       const now = getNow()
       this.createdAt = now
       this.updatedAt = now
+
+      this.titleId = "id-title-in-list-" + this.id
+      this.createdAtId = "id-createdAt-in-list-" + this.id
+      this.updatedAtId = "id-updatedAt-in-list-" + this.id
+      this.editButtonId = "id-edit-button-" + this.id
+
+      const tr = document.createElement("tr")
+      tr.setAttribute("id", this.id)
+      tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
+        '<td id = "' + this.idTitleInList + '" > ' + this.title + '</td >' +
+        '<td id="' + this.createdAtId + '">' + this.createdAt + '</td>' +
+        '<td id="' + this.updatedAtId + '">' + this.updatedAt + '</td>' +
+        '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
+      this.memoHTMLElement = tr
     }
 
     getDisplayedUpdatedAt() {
@@ -305,26 +331,26 @@
       return
     }
 
-    const createdAt = memo.createdAt
-    const updatedAt = memo.getDisplayedUpdatedAt()
-    const memoId = memo.id
+    //const createdAt = memo.createdAt
+    //const updatedAt = memo.getDisplayedUpdatedAt()
+    //const memoId = memo.id
 
-    const tr = document.createElement("tr")
-    tr.setAttribute("id", memoId)
+    //const tr = document.createElement("tr")
+    //tr.setAttribute("id", memoId)
 
-    const editButtonId = "id-edit-button-" + memoId
-    const idTitleInList = createTitleInMemoListId(memoId)
-    const updatedAtId = createUpdatedAtId(memoId)
-    const createdAtId = createCreatedAtInMemoListId(memoId)
+    //const editButtonId = "id-edit-button-" + memoId
+    //const idTitleInList = createTitleInMemoListId(memoId)
+    //const updatedAtId = createUpdatedAtId(memoId)
+    //const createdAtId = createCreatedAtInMemoListId(memoId)
 
-    tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
-    memoList.appendChild(tr)
+    //tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+    //memoList.appendChild(tr)
 
-    const inputForBody = document.createElement("input")
-    inputForBody.setAttribute("id", createBodyInListId(memoId))
-    inputForBody.setAttribute("type", "hidden")
-    inputForBody.value = body
-    tr.appendChild(inputForBody)
+    //const inputForBody = document.createElement("input")
+    //inputForBody.setAttribute("id", createBodyInListId(memoId))
+    //inputForBody.setAttribute("type", "hidden")
+    //inputForBody.value = body
+    //tr.appendChild(inputForBody)
 
     const editButton = document.getElementById(editButtonId)
     editButton.addEventListener("click", (event) => {
