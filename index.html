@@ -171,14 +171,38 @@
 
       memoList.appendChild(memo.memoHTMLElement)
 
-      //これは最終的には不要になると思います。
-      //HTMLとして本文を保持するための実装です。
-      const inputForBody = document.createElement("input")
-      inputForBody.setAttribute("id", createBodyInListId(memo.id))
-      inputForBody.setAttribute("type", "hidden")
-      inputForBody.value = memo.body
-      tr.appendChild(inputForBody)
+      //本来はMemoクラスに実装したい気がしなくもない・・・
+      document.getElementById(memo.editButtonId).addEventListener("click", (event) => {
+        validationErrorInEditModal.style.display = "none"
+        validationErrorInEditModal.innerHTML = ""
 
+        const memoId = event.currentTarget.dataset.memoId
+        memoIdInEditModal.value = memoId
+
+        const title = getIdTitleInMemoList(memoId).innerText
+        titleInEditModal.value = title
+
+        const body = getIdBodyInlist(memoId).value
+        bodyInEditModal.value = body
+
+        editModal.show()
+      })
+
+      //メモをバックエンドサーバに送信する
+      const req = new XMLHttpRequest()
+      req.addEventListener("load", () => {
+        console.log(req.responseText)
+      })
+      req.open("POST", "http://localhost:8080/add_memo")
+      req.setRequestHeader("Content-Type", "application/json")
+      const httpBody = {
+        ID: memo.id,
+        Title: memo.title,
+        Body: memo.body,
+        CreatedAt: memo.createdAt,
+        UpdatedAt: memo.createdAt
+      }
+      req.send(JSON.stringify(httpBody))
 
       return memo
     }
@@ -216,8 +240,17 @@
       tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
         '<td id = "' + this.idTitleInList + '" > ' + this.title + '</td >' +
         '<td id="' + this.createdAtId + '">' + this.createdAt + '</td>' +
-        '<td id="' + this.updatedAtId + '">' + this.updatedAt + '</td>' +
+        '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
         '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
+
+      //これは最終的には不要になると思います。
+      //HTMLとして本文を保持するための実装です。
+      const inputForBody = document.createElement("input")
+      inputForBody.setAttribute("id", createBodyInListId(this.id))
+      inputForBody.setAttribute("type", "hidden")
+      inputForBody.value = this.body
+      tr.appendChild(inputForBody)
+
       this.memoHTMLElement = tr
     }
 
@@ -328,63 +361,11 @@
 
     const memo = memos.addMemo(title, body)
     if (memo == null) {
+      //エラーがあるので、addModal.hile() をせずに return する。
       return
     }
 
-    //const createdAt = memo.createdAt
-    //const updatedAt = memo.getDisplayedUpdatedAt()
-    //const memoId = memo.id
-
-    //const tr = document.createElement("tr")
-    //tr.setAttribute("id", memoId)
-
-    //const editButtonId = "id-edit-button-" + memoId
-    //const idTitleInList = createTitleInMemoListId(memoId)
-    //const updatedAtId = createUpdatedAtId(memoId)
-    //const createdAtId = createCreatedAtInMemoListId(memoId)
-
-    //tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
-    //memoList.appendChild(tr)
-
-    //const inputForBody = document.createElement("input")
-    //inputForBody.setAttribute("id", createBodyInListId(memoId))
-    //inputForBody.setAttribute("type", "hidden")
-    //inputForBody.value = body
-    //tr.appendChild(inputForBody)
-
-    const editButton = document.getElementById(editButtonId)
-    editButton.addEventListener("click", (event) => {
-      validationErrorInEditModal.style.display = "none"
-      validationErrorInEditModal.innerHTML = ""
-
-      const memoId = event.currentTarget.dataset.memoId
-      memoIdInEditModal.value = memoId
-
-      const title = getIdTitleInMemoList(memoId).innerText
-      titleInEditModal.value = title
-
-      const body = getIdBodyInlist(memoId).value
-      bodyInEditModal.value = body
-
-      editModal.show()
-    })
-
-    //メモをバックエンドサーバに送信する
-    const req = new XMLHttpRequest()
-    req.addEventListener("load", () => {
-      console.log(req.responseText)
-    })
-    req.open("POST", "http://localhost:8080/add_memo")
-    req.setRequestHeader("Content-Type", "application/json")
-    const httpBody = {
-      ID: memoId,
-      Title: title,
-      Body: body,
-      CreatedAt: createdAt,
-      UpdatedAt: createdAt
-    }
-
-    req.send(JSON.stringify(httpBody))
+    //エラーがない場合はモーダルを閉じて終わる。
     addModal.hide()
   })
 
