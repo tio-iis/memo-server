@@ -155,18 +155,11 @@
       const memo = new Memo(title, body)
       var errStr = memo.errorStr
 
-      if (memoList.children.length > 0) {
-        Array.from(memoList.children).forEach((tr) => {
-          if (tr.id == memo.id) {
-            return
-          }
-
-          const t = getIdTitleInMemoList(tr.id).innerText
-          if (title == t) {
-            errStr = errStr + "すでに登録済みのタイトルです。<br>"
-          }
-        })
-      }
+      this.memos.forEach((m) => {
+        if (m.title == memo.title) {
+          errStr = errStr + "すでに登録済みのタイトルです。<br>"
+        }
+      })
 
       if (errStr.length > 0) {
         validationErrorInAddModal.innerHTML = errStr
