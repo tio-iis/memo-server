@@ -149,6 +149,70 @@
   class Memos {
     constructor() {
       this.memos = []
+
+      const req = new XMLHttpRequest()
+      req.addEventListener("load", () => {
+        //取得したメモ一覧をHTMLにしていく。
+        const memos = JSON.parse(req.responseText)
+        Object.values(memos).forEach((memoFromBackendServer) => {
+          const memo = Memo.createMemoFromBackendServer(
+            memoFromBackendServer.ID,
+            memoFromBackendServer.Title,
+            memoFromBackendServer.Body,
+            memoFromBackendServer.CreatedAt,
+            memoFromBackendServer.UpdatedAt
+          )
+
+          this.memos.push(memoFromBackendServer)
+
+          /*
+          const title = memo.Title
+          const body = memo.Body
+
+          const createdAt = memo.CreatedAt
+          const updatedAt = memo.UpdatedAt
+          const memoId = memo.ID
+
+          const tr = document.createElement("tr")
+          tr.setAttribute("id", memoId)
+
+          const editButtonId = "id-edit-button-" + memoId
+          const idTitleInList = createTitleInMemoListId(memoId)
+          const updatedAtId = createUpdatedAtId(memoId)
+          const createdAtId = createCreatedAtInMemoListId(memoId)
+
+          tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+          memoList.appendChild(tr)
+
+          const inputForBody = document.createElement("input")
+          inputForBody.setAttribute("id", createBodyInListId(memoId))
+          inputForBody.setAttribute("type", "hidden")
+          inputForBody.value = body
+          tr.appendChild(inputForBody)
+
+          const editButton = document.getElementById(editButtonId)
+          editButton.addEventListener("click", (event) => {
+            validationErrorInEditModal.style.display = "none"
+            validationErrorInEditModal.innerHTML = ""
+
+            const memoId = event.currentTarget.dataset.memoId
+            memoIdInEditModal.value = memoId
+
+            const title = getIdTitleInMemoList(memoId).innerText
+            titleInEditModal.value = title
+
+            const body = getIdBodyInlist(memoId).value
+            bodyInEditModal.value = body
+
+            editModal.show()
+          })
+        */
+        })
+      })
+      req.open("GET", "http://localhost:8080/list_memos")
+      req.setRequestHeader("Content-Type", "application/json")
+      req.send()
+
     }
 
     addMemo(title, body) {
@@ -230,6 +294,10 @@
       this.createdAt = now
       this.updatedAt = now
 
+      this.createHTML()
+    }
+
+    createHTML() {
       this.titleId = "id-title-in-list-" + this.id
       this.createdAtId = "id-createdAt-in-list-" + this.id
       this.updatedAtId = "id-updatedAt-in-list-" + this.id
@@ -238,7 +306,7 @@
       const tr = document.createElement("tr")
       tr.setAttribute("id", this.id)
       tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
-        '<td id = "' + this.idTitleInList + '" > ' + this.title + '</td >' +
+        '<td id = "' + this.titleId + '" > ' + this.title + '</td >' +
         '<td id="' + this.createdAtId + '">' + this.createdAt + '</td>' +
         '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
         '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
@@ -252,6 +320,22 @@
       tr.appendChild(inputForBody)
 
       this.memoHTMLElement = tr
+    }
+
+    //static を付けると static method という特別なメソッド
+    //バックエンドサーバから取得したメモを生成するための静的メソッド
+    static createMemoFromBackendServer(id, title, body, createdAt, updatedAt) {
+      const memo = new Memo(title, body)
+
+      //バックエンドサーバの値で上書きしてあげる
+      memo.id = id
+      memo.createdAt = createdAt
+      memo.updatedAt = updatedAt
+
+      //HTML関連の情報も上書きする
+      memo.createHTML()
+
+      return memo
     }
 
     getDisplayedUpdatedAt() {
@@ -268,6 +352,7 @@
   }
 
   //メモ一覧を表示する
+  /*
   const req = new XMLHttpRequest()
   req.addEventListener("load", () => {
     //取得したメモ一覧をHTMLにしていく。
@@ -321,6 +406,7 @@
   req.open("GET", "http://localhost:8080/list_memos")
   req.setRequestHeader("Content-Type", "application/json")
   req.send()
+  */
 
   function validateMemo(title, body, errorHTMLElement, memoId) {
     errorHTMLElement.innerHTML = ""
