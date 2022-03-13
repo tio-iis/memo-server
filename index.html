@@ -163,56 +163,23 @@
             memoFromBackendServer.UpdatedAt
           )
 
-          this.memos.push(memoFromBackendServer)
-
-          /*
-          const title = memo.Title
-          const body = memo.Body
-
-          const createdAt = memo.CreatedAt
-          const updatedAt = memo.UpdatedAt
-          const memoId = memo.ID
-
-          const tr = document.createElement("tr")
-          tr.setAttribute("id", memoId)
-
-          const editButtonId = "id-edit-button-" + memoId
-          const idTitleInList = createTitleInMemoListId(memoId)
-          const updatedAtId = createUpdatedAtId(memoId)
-          const createdAtId = createCreatedAtInMemoListId(memoId)
-
-          tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
-          memoList.appendChild(tr)
-
-          const inputForBody = document.createElement("input")
-          inputForBody.setAttribute("id", createBodyInListId(memoId))
-          inputForBody.setAttribute("type", "hidden")
-          inputForBody.value = body
-          tr.appendChild(inputForBody)
-
-          const editButton = document.getElementById(editButtonId)
-          editButton.addEventListener("click", (event) => {
-            validationErrorInEditModal.style.display = "none"
-            validationErrorInEditModal.innerHTML = ""
-
-            const memoId = event.currentTarget.dataset.memoId
-            memoIdInEditModal.value = memoId
-
-            const title = getIdTitleInMemoList(memoId).innerText
-            titleInEditModal.value = title
-
-            const body = getIdBodyInlist(memoId).value
-            bodyInEditModal.value = body
-
-            editModal.show()
-          })
-        */
+          this.pushMemo(memo)
         })
       })
       req.open("GET", "http://localhost:8080/list_memos")
       req.setRequestHeader("Content-Type", "application/json")
       req.send()
+    }
 
+    pushMemo(memo) {
+      this.memos.push(memo)
+
+      //Memosクラスで管理できるかもしれない。
+      memoList.appendChild(memo.memoHTMLElement)
+
+      document.getElementById(memo.editButtonId).addEventListener("click", (event) => {
+        memo.editButtonEvent(event)
+      })
     }
 
     addMemo(title, body) {
@@ -231,26 +198,7 @@
         return null
       }
 
-      this.memos.push(memo)
-
-      memoList.appendChild(memo.memoHTMLElement)
-
-      //本来はMemoクラスに実装したい気がしなくもない・・・
-      document.getElementById(memo.editButtonId).addEventListener("click", (event) => {
-        validationErrorInEditModal.style.display = "none"
-        validationErrorInEditModal.innerHTML = ""
-
-        const memoId = event.currentTarget.dataset.memoId
-        memoIdInEditModal.value = memoId
-
-        const title = getIdTitleInMemoList(memoId).innerText
-        titleInEditModal.value = title
-
-        const body = getIdBodyInlist(memoId).value
-        bodyInEditModal.value = body
-
-        editModal.show()
-      })
+      this.pushMemo(memo)
 
       //メモをバックエンドサーバに送信する
       const req = new XMLHttpRequest()
@@ -322,6 +270,17 @@
       this.memoHTMLElement = tr
     }
 
+    editButtonEvent(event) {
+      validationErrorInEditModal.style.display = "none"
+      validationErrorInEditModal.innerHTML = ""
+
+      memoIdInEditModal.value = this.id
+      titleInEditModal.value = this.title
+      bodyInEditModal.value = this.body
+
+      editModal.show()
+    }
+
     //static を付けると static method という特別なメソッド
     //バックエンドサーバから取得したメモを生成するための静的メソッド
     static createMemoFromBackendServer(id, title, body, createdAt, updatedAt) {
@@ -350,63 +309,6 @@
     const now = dayjs()
     return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
   }
-
-  //メモ一覧を表示する
-  /*
-  const req = new XMLHttpRequest()
-  req.addEventListener("load", () => {
-    //取得したメモ一覧をHTMLにしていく。
-    console.log(req.responseText)
-    const memos = JSON.parse(req.responseText)
-    console.log(Object.values(memos))
-
-    Object.values(memos).forEach((memo) => {
-      const title = memo.Title
-      const body = memo.Body
-
-      const createdAt = memo.CreatedAt
-      const updatedAt = memo.UpdatedAt
-      const memoId = memo.ID
-
-      const tr = document.createElement("tr")
-      tr.setAttribute("id", memoId)
-
-      const editButtonId = "id-edit-button-" + memoId
-      const idTitleInList = createTitleInMemoListId(memoId)
-      const updatedAtId = createUpdatedAtId(memoId)
-      const createdAtId = createCreatedAtInMemoListId(memoId)
-
-      tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + memoId + '" type="checkbox"></td><td id="' + idTitleInList + '">' + title + '</td><td id="' + createdAtId + '">' + createdAt + '</td><td id="' + updatedAtId + '">' + updatedAt + '</td><td><button type="button" data-memo-id="' + memoId + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
-      memoList.appendChild(tr)
-
-      const inputForBody = document.createElement("input")
-      inputForBody.setAttribute("id", createBodyInListId(memoId))
-      inputForBody.setAttribute("type", "hidden")
-      inputForBody.value = body
-      tr.appendChild(inputForBody)
-
-      const editButton = document.getElementById(editButtonId)
-      editButton.addEventListener("click", (event) => {
-        validationErrorInEditModal.style.display = "none"
-        validationErrorInEditModal.innerHTML = ""
-
-        const memoId = event.currentTarget.dataset.memoId
-        memoIdInEditModal.value = memoId
-
-        const title = getIdTitleInMemoList(memoId).innerText
-        titleInEditModal.value = title
-
-        const body = getIdBodyInlist(memoId).value
-        bodyInEditModal.value = body
-
-        editModal.show()
-      })
-    })
-  })
-  req.open("GET", "http://localhost:8080/list_memos")
-  req.setRequestHeader("Content-Type", "application/json")
-  req.send()
-  */
 
   function validateMemo(title, body, errorHTMLElement, memoId) {
     errorHTMLElement.innerHTML = ""
