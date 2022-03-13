@@ -182,6 +182,47 @@
       })
     }
 
+    updateMemo(id, title, body) {
+      const memo = this.getMemoById(id)
+
+      var errStr = ""
+      this.memos.forEach((m) => {
+        if (m.title == memo.title) {
+          errStr = "すでに登録済みのタイトルです。<br>"
+        }
+      })
+
+      memo.update(title, body)
+
+      errStr = errStr + memo.errorStr
+
+      if (errStr.length > 0) {
+        validationErrorInAddModal.innerHTML = errStr
+        validationErrorInAddModal.style.display = ""
+        return null
+      }
+
+      const req = new XMLHttpRequest()
+      req.addEventListener("load", () => {
+        console.log(req.responseText)
+      })
+      req.open("POST", "http://localhost:8080/add_memo")
+      req.setRequestHeader("Content-Type", "application/json")
+      const httpBody = {
+        ID: Number(memo.id),
+        Title: memo.title,
+        Body: memo.body,
+        CreatedAt: memo.createdAt,
+        UpdatedAt: memo.updatedAt
+      }
+      req.send(JSON.stringify(httpBody))
+      editModal.hide()
+    }
+
+    getMemoById(memoId) {
+      return this.memos.find(memo => memo.id = memoId)
+    }
+
     addMemo(title, body) {
       const memo = new Memo(title, body)
       var errStr = memo.errorStr
@@ -225,14 +266,14 @@
 
   class Memo {
     constructor(title, body) {
-      this.errorStr = ""
-      if (title.length < 1 || title.length > 30) {
-        this.errorStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-      }
+      this.errorStr = this.validate(title, body)
+      //if (title.length < 1 || title.length > 30) {
+      //  this.errorStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
+      //}
 
-      if (body.length < 1 || body.length > 100) {
-        this.errorStr = this.errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-      }
+      //if (body.length < 1 || body.length > 100) {
+      //  this.errorStr = this.errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+      //}
 
       this.title = title
       this.body = body
@@ -243,6 +284,35 @@
       this.updatedAt = now
 
       this.createHTML()
+    }
+
+    validate(title, body) {
+      var errorStr = ""
+      if (title.length < 1 || title.length > 30) {
+        errorStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
+      }
+
+      if (body.length < 1 || body.length > 100) {
+        errorStr = errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+      }
+
+      return errorStr
+    }
+
+    update(title, body) {
+      this.errorStr = this.validate(title, body)
+      if (this.errorStr.length > 1) {
+        return
+      }
+
+      this.title = title
+      document.getElementById(this.titleId).innerText = this.title
+
+      this.body = body
+
+      const now = getNow()
+      this.updatedAt = now
+      document.getElementById(this.updatedAtId).innerText = this.updatedAt
     }
 
     createHTML() {
@@ -409,6 +479,12 @@
     const title = titleInEditModal.value
     const body = bodyInEditModal.value
 
+    memos.updateMemo(memoId, title, body)
+
+    /*
+    const title = titleInEditModal.value
+    const body = bodyInEditModal.value
+
     if (validateMemo(title, body, validationErrorInEditModal, memoId) == false) {
       return
     }
@@ -441,6 +517,7 @@
     req.send(JSON.stringify(httpBody))
 
     editModal.hide()
+    */
   })
 
 </script>
