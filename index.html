@@ -118,30 +118,6 @@
   const bodyInEditModal = document.getElementById("id-modal-body")
   const checkboxes = document.getElementsByClassName(getCheckboxClass())
 
-  function getIdTitleInMemoList(memoId) {
-    return document.getElementById(createTitleInMemoListId(memoId))
-  }
-
-  function createTitleInMemoListId(memoId) {
-    return "id-title-in-list-" + memoId
-  }
-
-  function createCreatedAtInMemoListId(memoId) {
-    return "id-createdAt-in-list-" + memoId
-  }
-
-  function createUpdatedAtId(memoId) {
-    return "id-updated-at-" + memoId
-  }
-
-  function getIdBodyInlist(memoId) {
-    return document.getElementById(createBodyInListId(memoId))
-  }
-
-  function createBodyInListId(memoId) {
-    return "id-body-in-list-" + memoId
-  }
-
   function getCheckboxClass() {
     return "class-checkbox"
   }
@@ -183,7 +159,6 @@
     }
 
 
-    //メモを登録するときのバリデーションと若干重複しているので、まとめることを検討する。
     validateMemo(id, title, body) {
       var errStr = ""
       if (title.length < 1 || title.length > 30) {
@@ -266,6 +241,32 @@
 
       return ""
     }
+
+    deleteMemo(id) {
+      var deleteTarget = null
+      this.memos = this.memos.filter((memo) => {
+        if (memo.id == id) {
+          deleteTarget = memo
+          return false
+        }
+        return true
+      })
+
+      if (deleteTarget == null) {
+        return
+      }
+
+      deleteTarget.delete()
+
+      //削除エンドポイントを叩く
+      const req = new XMLHttpRequest()
+      req.addEventListener("load", () => {
+        console.log(req.responseText)
+      })
+      req.open("DELETE", "http://localhost:8080/delete_memos?id=" + deleteTarget.id)
+      req.setRequestHeader("Content-Type", "application/json")
+      req.send()
+    }
   }
 
   //Memosクラスの定義よりも下に書く必要がある。
@@ -315,19 +316,23 @@
       document.getElementById(this.updatedAtId).innerText = this.updatedAt
     }
 
+    delete() {
+      document.getElementById(this.id).remove()
+    }
+
     createHTML() {
       this.titleId = "id-title-in-list-" + this.id
-      this.createdAtId = "id-createdAt-in-list-" + this.id
+      const createdAtId = "id-createdAt-in-list-" + this.id
       this.updatedAtId = "id-updatedAt-in-list-" + this.id
-      this.editButtonId = "id-edit-button-" + this.id
+      const editButtonId = "id-edit-button-" + this.id
 
       const tr = document.createElement("tr")
       tr.setAttribute("id", this.id)
       tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
         '<td id = "' + this.titleId + '" > ' + this.title + '</td >' +
-        '<td id="' + this.createdAtId + '">' + this.createdAt + '</td>' +
+        '<td id="' + createdAtId + '">' + this.createdAt + '</td>' +
         '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
-        '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
+        '<td><button type="button" data-memo-id="' + this.id + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
 
       this.memoHTMLElement = tr
     }
@@ -391,16 +396,7 @@
       }
 
       const memoId = checkbox.dataset.memoId
-      document.getElementById(memoId).remove()
-
-      //削除エンドポイントを叩く
-      const req = new XMLHttpRequest()
-      req.addEventListener("load", () => {
-        console.log(req.responseText)
-      })
-      req.open("DELETE", "http://localhost:8080/delete_memos?id=" + memoId)
-      req.setRequestHeader("Content-Type", "application/json")
-      req.send()
+      memos.deleteMemo(memoId)
     })
   })
 
