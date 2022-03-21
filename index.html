@@ -182,25 +182,40 @@
       })
     }
 
-    updateMemo(id, title, body) {
-      const memo = this.getMemoById(id)
 
+    //メモを登録するときのバリデーションと若干重複しているので、まとめることを検討する。
+    validateMemo(id, title, body) {
       var errStr = ""
+      if (title.length < 1 || title.length > 30) {
+        errStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
+      }
+
+      if (body.length < 1 || body.length > 100) {
+        errStr = errStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+      }
+
       this.memos.forEach((m) => {
+        if (m.id == id) {
+          return
+        }
         if (m.title == memo.title) {
           errStr = "すでに登録済みのタイトルです。<br>"
         }
       })
 
-      memo.update(title, body)
+      return errStr
+    }
 
-      errStr = errStr + memo.errorStr
-
+    updateMemo(id, title, body) {
+      const errStr = this.validateMemo(id, title, body)
       if (errStr.length > 0) {
-        validationErrorInAddModal.innerHTML = errStr
-        validationErrorInAddModal.style.display = ""
+        validationErrorInEditModal.innerHTML = errStr
+        validationErrorInEditModal.style.display = ""
         return null
       }
+
+      const memo = this.getMemoById(id)
+      memo.update(title, body)
 
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
@@ -216,7 +231,6 @@
         UpdatedAt: memo.updatedAt
       }
       req.send(JSON.stringify(httpBody))
-      editModal.hide()
     }
 
     getMemoById(memoId) {
@@ -224,20 +238,16 @@
     }
 
     addMemo(title, body) {
-      const memo = new Memo(title, body)
-      var errStr = memo.errorStr
-
-      this.memos.forEach((m) => {
-        if (m.title == memo.title) {
-          errStr = errStr + "すでに登録済みのタイトルです。<br>"
-        }
-      })
+      //この時点で登録されるメモに id はないので、-1 を指定する。
+      this.validateMemo(-1, title, body)
 
       if (errStr.length > 0) {
         validationErrorInAddModal.innerHTML = errStr
         validationErrorInAddModal.style.display = ""
         return null
       }
+
+      const memo = new Memo(title, body)
 
       this.pushMemo(memo)
 
@@ -266,15 +276,6 @@
 
   class Memo {
     constructor(title, body) {
-      this.errorStr = this.validate(title, body)
-      //if (title.length < 1 || title.length > 30) {
-      //  this.errorStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-      //}
-
-      //if (body.length < 1 || body.length > 100) {
-      //  this.errorStr = this.errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-      //}
-
       this.title = title
       this.body = body
 
@@ -286,25 +287,7 @@
       this.createHTML()
     }
 
-    validate(title, body) {
-      var errorStr = ""
-      if (title.length < 1 || title.length > 30) {
-        errorStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-      }
-
-      if (body.length < 1 || body.length > 100) {
-        errorStr = errorStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-      }
-
-      return errorStr
-    }
-
     update(title, body) {
-      this.errorStr = this.validate(title, body)
-      if (this.errorStr.length > 1) {
-        return
-      }
-
       this.title = title
       document.getElementById(this.titleId).innerText = this.title
 
@@ -481,43 +464,8 @@
 
     memos.updateMemo(memoId, title, body)
 
-    /*
-    const title = titleInEditModal.value
-    const body = bodyInEditModal.value
-
-    if (validateMemo(title, body, validationErrorInEditModal, memoId) == false) {
-      return
-    }
-
-    //メモリストのタイトル
-    getIdTitleInMemoList(memoId).innerText = title
-
-    //本文
-    getIdBodyInlist(memoId).value = body
-
-    const updatedAt = getNow()
-    document.getElementById(createUpdatedAtId(memoId)).innerText = updatedAt
-
-    const createdAtElm = document.getElementById(createCreatedAtInMemoListId(memoId))
-    const createdAt = createdAtElm.innerText
-
-    const req = new XMLHttpRequest()
-    req.addEventListener("load", () => {
-      console.log(req.responseText)
-    })
-    req.open("POST", "http://localhost:8080/add_memo")
-    req.setRequestHeader("Content-Type", "application/json")
-    const httpBody = {
-      ID: Number(memoId),
-      Title: title,
-      Body: body,
-      CreatedAt: createdAt,
-      UpdatedAt: updatedAt
-    }
-    req.send(JSON.stringify(httpBody))
 
     editModal.hide()
-    */
   })
 
 </script>
