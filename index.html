@@ -198,7 +198,7 @@
         if (m.id == id) {
           return
         }
-        if (m.title == memo.title) {
+        if (m.title == title) {
           errStr = "すでに登録済みのタイトルです。<br>"
         }
       })
@@ -209,9 +209,7 @@
     updateMemo(id, title, body) {
       const errStr = this.validateMemo(id, title, body)
       if (errStr.length > 0) {
-        validationErrorInEditModal.innerHTML = errStr
-        validationErrorInEditModal.style.display = ""
-        return null
+        return errStr
       }
 
       const memo = this.getMemoById(id)
@@ -231,6 +229,8 @@
         UpdatedAt: memo.updatedAt
       }
       req.send(JSON.stringify(httpBody))
+
+      return ""
     }
 
     getMemoById(memoId) {
@@ -239,15 +239,12 @@
 
     addMemo(title, body) {
       //この時点で登録されるメモに id はないので、-1 を指定する。
-      this.validateMemo(-1, title, body)
-
+      const errStr = this.validateMemo(-1, title, body)
       if (errStr.length > 0) {
-        validationErrorInAddModal.innerHTML = errStr
-        validationErrorInAddModal.style.display = ""
-        return null
+        return errStr
       }
 
-      const memo = new Memo(title, body)
+      const memo = Memo.createNewMemo(title, body)
 
       this.pushMemo(memo)
 
@@ -267,7 +264,7 @@
       }
       req.send(JSON.stringify(httpBody))
 
-      return memo
+      return ""
     }
   }
 
@@ -285,6 +282,26 @@
       this.updatedAt = now
 
       this.createHTML()
+    }
+
+    static createNewMemo(title, body) {
+      return new Memo(title, body)
+    }
+
+    //static を付けると static method という特別なメソッド
+    //バックエンドサーバから取得したメモを生成するための静的メソッド
+    static createMemoFromBackendServer(id, title, body, createdAt, updatedAt) {
+      const memo = new Memo(title, body)
+
+      //バックエンドサーバの値で上書きしてあげる
+      memo.id = id
+      memo.createdAt = createdAt
+      memo.updatedAt = updatedAt
+
+      //HTML関連の情報も上書きする
+      memo.createHTML()
+
+      return memo
     }
 
     update(title, body) {
@@ -312,14 +329,6 @@
         '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
         '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
 
-      //これは最終的には不要になると思います。
-      //HTMLとして本文を保持するための実装です。
-      const inputForBody = document.createElement("input")
-      inputForBody.setAttribute("id", createBodyInListId(this.id))
-      inputForBody.setAttribute("type", "hidden")
-      inputForBody.value = this.body
-      tr.appendChild(inputForBody)
-
       this.memoHTMLElement = tr
     }
 
@@ -332,22 +341,6 @@
       bodyInEditModal.value = this.body
 
       editModal.show()
-    }
-
-    //static を付けると static method という特別なメソッド
-    //バックエンドサーバから取得したメモを生成するための静的メソッド
-    static createMemoFromBackendServer(id, title, body, createdAt, updatedAt) {
-      const memo = new Memo(title, body)
-
-      //バックエンドサーバの値で上書きしてあげる
-      memo.id = id
-      memo.createdAt = createdAt
-      memo.updatedAt = updatedAt
-
-      //HTML関連の情報も上書きする
-      memo.createHTML()
-
-      return memo
     }
 
     getDisplayedUpdatedAt() {
@@ -363,46 +356,16 @@
     return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
   }
 
-  function validateMemo(title, body, errorHTMLElement, memoId) {
-    errorHTMLElement.innerHTML = ""
-    if (title.length < 1 || title.length > 30) {
-      errorHTMLElement.innerHTML = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-    }
-
-    if (body.length < 1 || body.length > 100) {
-      errorHTMLElement.innerHTML = errorHTMLElement.innerHTML + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-    }
-
-    //すでに登録済みのタイトルがないかをチェックする
-    if (memoList.children.length > 0) {
-      Array.from(memoList.children).forEach((tr) => {
-        if (tr.id == memoId) {
-          return
-        }
-
-        const t = getIdTitleInMemoList(tr.id).innerText
-        if (title == t) {
-          errorHTMLElement.innerHTML = errorHTMLElement.innerHTML + "すでに登録済みのタイトルです。<br>"
-        }
-      })
-    }
-
-    if (errorHTMLElement.innerHTML.length > 0) {
-      errorHTMLElement.style.display = ""
-      return false
-    }
-
-    return true
-  }
-
   const addButtonInModal = document.getElementById("id-add-modal-button")
   addButtonInModal.addEventListener("click", (event) => {
     const title = titleInAddModal.value
     const body = bodyInAddModal.value
 
-    const memo = memos.addMemo(title, body)
-    if (memo == null) {
+    const errStr = memos.addMemo(title, body)
+    if (errStr.length > 0) {
       //エラーがあるので、addModal.hile() をせずに return する。
+      validationErrorInAddModal.innerHTML = errStr
+      validationErrorInAddModal.style.display = ""
       return
     }
 
@@ -462,8 +425,12 @@
     const title = titleInEditModal.value
     const body = bodyInEditModal.value
 
-    memos.updateMemo(memoId, title, body)
-
+    const errStr = memos.updateMemo(memoId, title, body)
+    if (errStr.length > 0) {
+      validationErrorInEditModal.innerHTML = errStr
+      validationErrorInEditModal.style.display = ""
+      return
+    }
 
     editModal.hide()
   })
