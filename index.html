@@ -275,7 +275,7 @@
       this.body = body
 
       this.id = dayjs().valueOf()
-      const now = getNow()
+      const now = MemoDate.getNow()
       this.createdAt = now
       this.updatedAt = now
 
@@ -308,7 +308,7 @@
 
       this.body = body
 
-      const now = getNow()
+      const now = MemoDate.getNow()
       this.updatedAt = now
       document.getElementById(this.updatedAtId).innerText = this.updatedAt
     }
@@ -346,7 +346,7 @@
     }
 
     getDisplayedCreatedAt() {
-      return this.getDateFormat(this.createdAt)
+      return MemoDate.getDateFormat(this.createdAt)
     }
 
     getDisplayedUpdatedAt() {
@@ -354,17 +354,20 @@
         return "なし"
       }
 
-      return this.getDateFormat(this.updatedAt)
+      return MemoDate.getDateFormat(this.updatedAt)
     }
 
-    getDateFormat(dateStr) {
-      return dayjs(dateStr).format("YYYY-MM-DD HH:mm:ss")
-    }
   }
 
-  function getNow() {
-    const now = dayjs()
-    return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
+  class MemoDate {
+    static getDisplayedFormat(dateStr) {
+      return dayjs(dateStr).format("YYYY-MM-DD HH:mm:ss")
+    }
+
+    static getNow() {
+      const now = dayjs()
+      return now.format("YYYY-MM-DD") + "T" + now.format("HH:mm:ss") + "+09:00"
+    }
   }
 
   const addButtonInModal = document.getElementById("id-add-modal-button")
