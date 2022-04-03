@@ -192,7 +192,6 @@
 
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
-        console.log(req.responseText)
       })
       req.open("POST", "http://localhost:8080/add_memo")
       req.setRequestHeader("Content-Type", "application/json")
@@ -226,7 +225,6 @@
       //メモをバックエンドサーバに送信する
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
-        console.log(req.responseText)
       })
       req.open("POST", "http://localhost:8080/add_memo")
       req.setRequestHeader("Content-Type", "application/json")
@@ -261,7 +259,6 @@
       //削除エンドポイントを叩く
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
-        console.log(req.responseText)
       })
       req.open("DELETE", "http://localhost:8080/delete_memos?id=" + deleteTarget.id)
       req.setRequestHeader("Content-Type", "application/json")
@@ -324,15 +321,15 @@
       this.titleId = "id-title-in-list-" + this.id
       const createdAtId = "id-createdAt-in-list-" + this.id
       this.updatedAtId = "id-updatedAt-in-list-" + this.id
-      const editButtonId = "id-edit-button-" + this.id
+      this.editButtonId = "id-edit-button-" + this.id
 
       const tr = document.createElement("tr")
       tr.setAttribute("id", this.id)
       tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
         '<td id = "' + this.titleId + '" > ' + this.title + '</td >' +
-        '<td id="' + createdAtId + '">' + this.createdAt + '</td>' +
+        '<td id="' + createdAtId + '">' + this.getDisplayedCreatedAt() + '</td>' +
         '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
-        '<td><button type="button" data-memo-id="' + this.id + '" id="' + editButtonId + '" class="btn btn-primary">編集</button></td>'
+        '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
 
       this.memoHTMLElement = tr
     }
@@ -348,11 +345,20 @@
       editModal.show()
     }
 
+    getDisplayedCreatedAt() {
+      return this.getDateFormat(this.createdAt)
+    }
+
     getDisplayedUpdatedAt() {
-      if (this.createdAt = this.updatedAt) {
+      if (this.createdAt == this.updatedAt) {
         return "なし"
       }
-      return this.updatedAt
+
+      return this.getDateFormat(this.updatedAt)
+    }
+
+    getDateFormat(dateStr) {
+      return dayjs(dateStr).format("YYYY-MM-DD HH:mm:ss")
     }
   }
 
