@@ -161,11 +161,11 @@
 
     validateMemo(id, title, body) {
       var errStr = ""
-      if (title.length < 1 || title.length > 30) {
+      if (title.length < 1 || title.length > Memo.MaxTitleLength) {
         errStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
       }
 
-      if (body.length < 1 || body.length > 100) {
+      if (body.length < 1 || body.length > Memo.MaxBodyLength) {
         errStr = errStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
       }
 
@@ -270,6 +270,10 @@
   const memos = new Memos()
 
   class Memo {
+
+    static MaxTitleLength = 30
+    static MaxBodyLength = 100
+
     constructor(title, body) {
       this.title = title
       this.body = body
@@ -346,7 +350,7 @@
     }
 
     getDisplayedCreatedAt() {
-      return MemoDate.getDateFormat(this.createdAt)
+      return MemoDate.getDisplayedFormat(this.createdAt)
     }
 
     getDisplayedUpdatedAt() {
@@ -354,7 +358,7 @@
         return "なし"
       }
 
-      return MemoDate.getDateFormat(this.updatedAt)
+      return MemoDate.getDisplayedFormat(this.updatedAt)
     }
 
   }
