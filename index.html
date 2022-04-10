@@ -208,7 +208,7 @@
     }
 
     getMemoById(memoId) {
-      return this.memos.find(memo => memo.id = memoId)
+      return this.memos.find(memo => memo.id == memoId)
     }
 
     addMemo(title, body) {
@@ -314,7 +314,7 @@
 
       const now = MemoDate.getNow()
       this.updatedAt = now
-      document.getElementById(this.updatedAtId).innerText = this.updatedAt
+      document.getElementById(this.updatedAtId).innerText = this.getDisplayedUpdatedAt()
     }
 
     delete() {
@@ -443,6 +443,44 @@
 
     editModal.hide()
   })
+
+
+
+
+
+  class User {
+    //プライベートなプロパティはここに定義する必要がある。
+    #privateName
+
+    constructor(publicName, privateName) {
+      //パブリックなプロパティ
+      this.publicName = publicName
+
+      //プライベートなプロパティ
+      this.#privateName = privateName
+    }
+
+    //パブリックなメソッド
+    getPublicName() {
+      return "public: " + this.publicName + "-san / " + this.#privateName
+    }
+
+    //プライベートなメソッド
+    #getPrivateName() {
+      return "private: " + this.publicName + "-san / " + this.#privateName
+    }
+  }
+
+  u = new User("public-tio", "private-tio")
+  console.log(u.publicName)
+  console.log(u.getPublicName())
+
+  //プライベートなプロパティはクラス外からアクセスできない。
+  //console.log(u.#privateName)
+
+  //プライベートなメソッドはクラス外からアクセスできない。
+  //console.log(u.#getPrivateName())
+
 
 </script>
 
