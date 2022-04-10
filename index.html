@@ -123,8 +123,10 @@
   }
 
   class Memos {
+    #memos
+
     constructor() {
-      this.memos = []
+      this.#memos = []
 
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
@@ -139,7 +141,7 @@
             memoFromBackendServer.UpdatedAt
           )
 
-          this.pushMemo(memo)
+          this.#pushMemo(memo)
         })
       })
       req.open("GET", "http://localhost:8080/list_memos")
@@ -147,8 +149,8 @@
       req.send()
     }
 
-    pushMemo(memo) {
-      this.memos.push(memo)
+    #pushMemo(memo) {
+      this.#memos.push(memo)
 
       //Memosクラスで管理できるかもしれない。
       memoList.appendChild(memo.memoHTMLElement)
@@ -159,7 +161,7 @@
     }
 
 
-    validateMemo(id, title, body) {
+    #validateMemo(id, title, body) {
       var errStr = ""
       if (title.length < 1 || title.length > Memo.MaxTitleLength) {
         errStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
@@ -169,7 +171,7 @@
         errStr = errStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
       }
 
-      this.memos.forEach((m) => {
+      this.#memos.forEach((m) => {
         if (m.id == id) {
           return
         }
@@ -182,12 +184,12 @@
     }
 
     updateMemo(id, title, body) {
-      const errStr = this.validateMemo(id, title, body)
+      const errStr = this.#validateMemo(id, title, body)
       if (errStr.length > 0) {
         return errStr
       }
 
-      const memo = this.getMemoById(id)
+      const memo = this.#getMemoById(id)
       memo.update(title, body)
 
       const req = new XMLHttpRequest()
@@ -207,20 +209,20 @@
       return ""
     }
 
-    getMemoById(memoId) {
-      return this.memos.find(memo => memo.id == memoId)
+    #getMemoById(memoId) {
+      return this.#memos.find(memo => memo.id == memoId)
     }
 
     addMemo(title, body) {
       //この時点で登録されるメモに id はないので、-1 を指定する。
-      const errStr = this.validateMemo(-1, title, body)
+      const errStr = this.#validateMemo(-1, title, body)
       if (errStr.length > 0) {
         return errStr
       }
 
       const memo = Memo.createNewMemo(title, body)
 
-      this.pushMemo(memo)
+      this.#pushMemo(memo)
 
       //メモをバックエンドサーバに送信する
       const req = new XMLHttpRequest()
@@ -242,7 +244,7 @@
 
     deleteMemo(id) {
       var deleteTarget = null
-      this.memos = this.memos.filter((memo) => {
+      this.#memos = this.#memos.filter((memo) => {
         if (memo.id == id) {
           deleteTarget = memo
           return false
@@ -283,7 +285,7 @@
       this.createdAt = now
       this.updatedAt = now
 
-      this.createHTML()
+      this.#createHTML()
     }
 
     static createNewMemo(title, body) {
@@ -301,7 +303,7 @@
       memo.updatedAt = updatedAt
 
       //HTML関連の情報も上書きする
-      memo.createHTML()
+      memo.#createHTML()
 
       return memo
     }
@@ -314,17 +316,19 @@
 
       const now = MemoDate.getNow()
       this.updatedAt = now
-      document.getElementById(this.updatedAtId).innerText = this.getDisplayedUpdatedAt()
+      document.getElementById(this.#updatedAtId).innerText = this.getDisplayedUpdatedAt()
     }
 
     delete() {
       document.getElementById(this.id).remove()
     }
 
-    createHTML() {
+    #updatedAtId
+
+    #createHTML() {
       this.titleId = "id-title-in-list-" + this.id
       const createdAtId = "id-createdAt-in-list-" + this.id
-      this.updatedAtId = "id-updatedAt-in-list-" + this.id
+      this.#updatedAtId = "id-updatedAt-in-list-" + this.id
       this.editButtonId = "id-edit-button-" + this.id
 
       const tr = document.createElement("tr")
@@ -332,7 +336,7 @@
       tr.innerHTML = '<td><input class="' + getCheckboxClass() + '" data-memo-id="' + this.id + '" type="checkbox"></td>' +
         '<td id = "' + this.titleId + '" > ' + this.title + '</td >' +
         '<td id="' + createdAtId + '">' + this.getDisplayedCreatedAt() + '</td>' +
-        '<td id="' + this.updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
+        '<td id="' + this.#updatedAtId + '">' + this.getDisplayedUpdatedAt() + '</td>' +
         '<td><button type="button" data-memo-id="' + this.id + '" id="' + this.editButtonId + '" class="btn btn-primary">編集</button></td>'
 
       this.memoHTMLElement = tr
@@ -443,44 +447,6 @@
 
     editModal.hide()
   })
-
-
-
-
-
-  class User {
-    //プライベートなプロパティはここに定義する必要がある。
-    #privateName
-
-    constructor(publicName, privateName) {
-      //パブリックなプロパティ
-      this.publicName = publicName
-
-      //プライベートなプロパティ
-      this.#privateName = privateName
-    }
-
-    //パブリックなメソッド
-    getPublicName() {
-      return "public: " + this.publicName + "-san / " + this.#privateName
-    }
-
-    //プライベートなメソッド
-    #getPrivateName() {
-      return "private: " + this.publicName + "-san / " + this.#privateName
-    }
-  }
-
-  u = new User("public-tio", "private-tio")
-  console.log(u.publicName)
-  console.log(u.getPublicName())
-
-  //プライベートなプロパティはクラス外からアクセスできない。
-  //console.log(u.#privateName)
-
-  //プライベートなメソッドはクラス外からアクセスできない。
-  //console.log(u.#getPrivateName())
-
 
 </script>
 
