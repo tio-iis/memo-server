@@ -46,6 +46,32 @@ type Memo struct {
 	UpdatedAt time.Time
 }
 
+//Go言語におけるメソッドである。
+func (m *Memo) Validate() []string {
+	//エラーメッセージを格納する string の配列を定義する
+	errMsgs := make([]string, 0)
+
+	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
+	if len(m.Title) < 1 || len(m.Title) > 30 {
+		errMsgs = append(errMsgs, "タイトルの文字数は1文字以上30文字以下にしてください")
+	}
+
+	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
+	if len(m.Body) < 1 || len(m.Body) > 100 {
+		errMsgs = append(errMsgs, "本文の文字数は1文字以上100文字以下にしてください")
+	}
+
+	return errMsgs
+}
+
+//Goではコンストラクタの代わりに関数を利用して、
+//構造体のオブジェクトを生成する。
+//構造体を生成する関数の名前は New + 構造体名 にするのが一般的です。
+//ただ、今回は使いません。
+//func NewMemo() *Memo {
+//	return &Memo{}
+//}
+
 //Memo構造体をポインタ型として定義しています。
 // [1111] => {ID:1111, Title:mytitle .... }
 // [222] => {ID:1111, Title:mytitle .... }
@@ -67,9 +93,9 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
-	if len(m.Title) < 1 || len(m.Title) > 30 {
-		fmt.Fprintln(w, "タイトルの文字数は1文字以上30文字以下にしてください")
+	errMsgs := m.Validate()
+	if len(errMsgs) > 0 {
+		fmt.Fprintln(w, errMsgs)
 		return
 	}
 
