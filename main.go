@@ -47,6 +47,9 @@ type Memo struct {
 }
 
 //Memo構造体をポインタ型として定義しています。
+// [1111] => {ID:1111, Title:mytitle .... }
+// [222] => {ID:1111, Title:mytitle .... }
+// [333] => {ID:1111, Title:mytitle .... }
 var memos map[int]*Memo = map[int]*Memo{}
 
 //メモを登録する。
@@ -61,6 +64,12 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//Memo構造体にセットしている。
 	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
 		fmt.Fprintln(w, "error:"+err.Error())
+		return
+	}
+
+	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
+	if len(m.Title) < 1 || len(m.Title) > 30 {
+		fmt.Fprintln(w, "タイトルの文字数は1文字以上30文字以下にしてください")
 		return
 	}
 
