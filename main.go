@@ -52,12 +52,12 @@ func (m *Memo) Validate() []string {
 	errMsgs := make([]string, 0)
 
 	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
-	if len(m.Title) < 1 || len(m.Title) > 30 {
+	if len([]rune(m.Title)) < 1 || len([]rune(m.Title)) > 30 {
 		errMsgs = append(errMsgs, "タイトルの文字数は1文字以上30文字以下にしてください")
 	}
 
 	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
-	if len(m.Body) < 1 || len(m.Body) > 100 {
+	if len([]rune(m.Body)) < 1 || len([]rune(m.Body)) > 100 {
 		errMsgs = append(errMsgs, "本文の文字数は1文字以上100文字以下にしてください")
 	}
 
