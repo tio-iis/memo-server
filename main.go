@@ -95,6 +95,12 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 
 	errMsgs := m.Validate()
 	if len(errMsgs) > 0 {
+		// クライアント側から送信されるリクエストに問題があるので、
+		// HTTP Status 400 を返す。
+		// Go言語では定数としてHTTP Statusが用意されているので、
+		// それを利用するのがいいと思います。
+		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, errMsgs)
 		return
 	}
