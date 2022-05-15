@@ -47,18 +47,24 @@ type Memo struct {
 }
 
 //Go言語におけるメソッドである。
-func (m *Memo) Validate() []string {
+func (m *Memo) Validate() []ErrorMessage {
 	//エラーメッセージを格納する string の配列を定義する
-	errMsgs := make([]string, 0)
+	errMsgs := make([]ErrorMessage, 0)
 
 	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
 	if len([]rune(m.Title)) < 1 || len([]rune(m.Title)) > 30 {
-		errMsgs = append(errMsgs, "タイトルの文字数は1文字以上30文字以下にしてください")
+		errMsgs = append(errMsgs, ErrorMessage{
+			Code:     "InvalidTitle",
+			Messsage: "タイトルの文字数は1文字以上30文字以下にしてください",
+		})
 	}
 
 	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
 	if len([]rune(m.Body)) < 1 || len([]rune(m.Body)) > 100 {
-		errMsgs = append(errMsgs, "本文の文字数は1文字以上100文字以下にしてください")
+		errMsgs = append(errMsgs, ErrorMessage{
+			Code:     "InvalidBody",
+			Messsage: "本文の文字数は1文字以上100文字以下にしてください",
+		})
 	}
 
 	return errMsgs
@@ -77,6 +83,19 @@ func (m *Memo) Validate() []string {
 // [222] => {ID:1111, Title:mytitle .... }
 // [333] => {ID:1111, Title:mytitle .... }
 var memos map[int]*Memo = map[int]*Memo{}
+
+//Go言語では構造体や関数などの名前の先頭を大文字にするか小文字にするかで、
+//プログラムの挙動が変わります。
+//メモ帳アプリでは基本的に大文字にした方がよいです。
+//私は忘れて小文字にしてしまっています。
+type ErrorMessage struct {
+	Code     string `json:"code"`
+	Messsage string `json:"message"`
+}
+
+type ErrorResponse struct {
+	Errors []ErrorMessage `json:"errors"`
+}
 
 //メモを登録する。
 //curl -X POST -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
@@ -101,7 +120,18 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		// それを利用するのがいいと思います。
 		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, errMsgs)
+
+		er := &ErrorResponse{
+			Errors: errMsgs,
+		}
+
+		erJSON, err := json.Marshal(er)
+		if err != nil {
+			fmt.Fprintln(w, "error:"+err.Error())
+			return
+
+		}
+		fmt.Fprintln(w, string(erJSON))
 		return
 	}
 
