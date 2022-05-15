@@ -119,19 +119,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		// Go言語では定数としてHTTP Statusが用意されているので、
 		// それを利用するのがいいと思います。
 		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
-		w.WriteHeader(http.StatusBadRequest)
-
-		er := &ErrorResponse{
-			Errors: errMsgs,
-		}
-
-		erJSON, err := json.Marshal(er)
-		if err != nil {
-			fmt.Fprintln(w, "error:"+err.Error())
-			return
-
-		}
-		fmt.Fprintln(w, string(erJSON))
+		ReponseError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
 
@@ -142,6 +130,28 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//HTTP Response は空にするので、nilを指定する。
 	//len()は配列やマップなどの長さを出力することができる関数です。
 	fmt.Fprintln(w, len(memos))
+}
+
+func ReponseError(w http.ResponseWriter, httpStatus int, e []ErrorMessage) {
+	er := &ErrorResponse{
+		Errors: e,
+	}
+
+	erJSON, err := json.Marshal(er)
+	if err != nil {
+		//https://developer.mozilla.org/ja/docs/Web/HTTP/Status/500
+		//サーバ側が原因でエラーが発生した場合は、500を利用する。
+		w.WriteHeader(http.StatusInternalServerError)
+
+		//JSON形式ではないが、
+		//↑の json.Marshal() で現実的にエラーが発生することがないので、
+		//簡易的なエラーメッセージにしている。
+		fmt.Fprintln(w, "error:"+err.Error())
+		return
+	}
+
+	w.WriteHeader(httpStatus)
+	fmt.Fprintln(w, string(erJSON))
 }
 
 //保存してあるメモの一覧をJSONで出力する。
