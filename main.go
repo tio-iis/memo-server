@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -28,8 +27,8 @@ func main() {
 func showHTML(w http.ResponseWriter, r *http.Request) {
 	data, err := os.ReadFile("index.html")
 	if err != nil {
-		//ファイルが見つからない場合
-		log.Fatal(err)
+		RespondInternalServerError(w)
+		return
 	}
 
 	htmlStr = string(data)
@@ -103,8 +102,14 @@ func NewErrorMessage(code, message string) *ErrorMessage {
 }
 
 //500エラー専用の構造体を作成する
-func NewErrorResponseForInternalServerError() *ErrorMessage {
+func NewErrorMessageForInternalServerError() *ErrorMessage {
 	return NewErrorMessage("InternalServerError", "内部エラーが発生しました。")
+}
+
+//404エラー専用の構造体を作成する
+//HTTP Status 404 は操作対象のデータが存在しない場合に利用する。
+func NewErrorMessageForNotFound() *ErrorMessage {
+	return NewErrorMessage("NotFound", "対象のメモはありません")
 }
 
 type ErrorResponse struct {
@@ -128,7 +133,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//HTTPリクエストで送信されてきた HTTP Request Body(JSON形式)を
 	//Memo構造体にセットしている。
 	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
-		fmt.Fprintln(w, "error:"+err.Error())
+		RespondInternalServerError(w)
 		return
 	}
 
@@ -150,6 +155,26 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//HTTP Response は空にするので、nilを指定する。
 	//len()は配列やマップなどの長さを出力することができる関数です。
 	fmt.Fprintln(w, len(memos))
+}
+
+func RespondInternalServerError(w http.ResponseWriter) {
+	RespondError(
+		w,
+		http.StatusInternalServerError,
+		[]*ErrorMessage{
+			NewErrorMessageForInternalServerError(),
+		},
+	)
+}
+
+func RespondNotFoundError(w http.ResponseWriter) {
+	RespondError(
+		w,
+		http.StatusNotFound,
+		[]*ErrorMessage{
+			NewErrorMessageForNotFound(),
+		},
+	)
 }
 
 func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
@@ -177,7 +202,7 @@ func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
 func listMemos(w http.ResponseWriter, r *http.Request) {
 	b, err := json.Marshal(memos)
 	if err != nil {
-		fmt.Fprintln(w, "error:"+err.Error())
+		RespondInternalServerError(w)
 		return
 
 	}
@@ -189,11 +214,13 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 //curl -X DELETE localhost:8080/delete_memos?id=1111,222222,333
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	//メモが存在しない場合は何もせずに終わる
+	//TODO: あとでエラーハンドリングする
 	if len(memos) == 0 {
-		fmt.Fprintln(w, "There is not a memo.")
+		RespondNotFoundError(w)
 		return
 	}
 
+	//TODO: 不要な実装をあとで削除する
 	id := r.URL.Query().Get("id")
 	ids := strings.Split(id, ",")
 	for _, id := range ids {
