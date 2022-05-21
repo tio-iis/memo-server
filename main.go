@@ -47,24 +47,26 @@ type Memo struct {
 }
 
 //Go言語におけるメソッドである。
-func (m *Memo) Validate() []ErrorMessage {
+func (m *Memo) Validate() []*ErrorMessage {
 	//エラーメッセージを格納する string の配列を定義する
-	errMsgs := make([]ErrorMessage, 0)
+	errMsgs := make([]*ErrorMessage, 0)
 
 	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
 	if len([]rune(m.Title)) < 1 || len([]rune(m.Title)) > 30 {
-		errMsgs = append(errMsgs, ErrorMessage{
-			Code:     "InvalidTitle",
-			Messsage: "タイトルの文字数は1文字以上30文字以下にしてください",
-		})
+		errMsgs = append(errMsgs, NewErrorMessage(
+			"InvalidTitle",
+			"タイトルの文字数は1文字以上30文字以下にしてください",
+		),
+		)
 	}
 
 	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
 	if len([]rune(m.Body)) < 1 || len([]rune(m.Body)) > 100 {
-		errMsgs = append(errMsgs, ErrorMessage{
-			Code:     "InvalidBody",
-			Messsage: "本文の文字数は1文字以上100文字以下にしてください",
-		})
+		errMsgs = append(errMsgs, NewErrorMessage(
+			"InvalidBody",
+			"本文の文字数は1文字以上100文字以下にしてください",
+		),
+		)
 	}
 
 	return errMsgs
@@ -93,8 +95,26 @@ type ErrorMessage struct {
 	Messsage string `json:"message"`
 }
 
+func NewErrorMessage(code, message string) *ErrorMessage {
+	return &ErrorMessage{
+		Code:     code,
+		Messsage: message,
+	}
+}
+
+//500エラー専用の構造体を作成する
+func NewErrorResponseForInternalServerError() *ErrorMessage {
+	return NewErrorMessage("InternalServerError", "内部エラーが発生しました。")
+}
+
 type ErrorResponse struct {
-	Errors []ErrorMessage `json:"errors"`
+	Errors []*ErrorMessage `json:"errors"`
+}
+
+func NewErrorResponse(em []*ErrorMessage) *ErrorResponse {
+	return &ErrorResponse{
+		Errors: em,
+	}
 }
 
 //メモを登録する。
@@ -119,7 +139,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		// Go言語では定数としてHTTP Statusが用意されているので、
 		// それを利用するのがいいと思います。
 		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
-		ReponseError(w, http.StatusBadRequest, errMsgs)
+		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
 
@@ -132,10 +152,8 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, len(memos))
 }
 
-func ReponseError(w http.ResponseWriter, httpStatus int, e []ErrorMessage) {
-	er := &ErrorResponse{
-		Errors: e,
-	}
+func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
+	er := NewErrorResponse(e)
 
 	erJSON, err := json.Marshal(er)
 	if err != nil {
