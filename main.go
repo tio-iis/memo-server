@@ -255,46 +255,75 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 }
 
 type Log struct {
+	//Go言語の"埋め込み（Embed）"を利用することで、
+	//Datetime, Level の定義を重複せずにLog, AccesssLogに定義することができる。
+	*BaseLog
+	Message string `json:"message"`
+}
+
+func NewLogInfo(message string) *Log {
+	return &Log{
+		BaseLog: NewBaselogInfo(),
+		Message: message,
+	}
+}
+
+func NewLogError(message string) *Log {
+	return &Log{
+		BaseLog: NewBaselogError(),
+		Message: message,
+	}
+}
+
+type AccessLog struct {
+	*BaseLog
+	URL string `json:"url"`
+}
+
+func NewAccessLog(u *url.URL) *AccessLog {
+	bl := NewBaselogInfo()
+	bl.Kind = "access_log"
+	return &AccessLog{
+		BaseLog: bl,
+		URL:     u.String(),
+	}
+}
+
+type BaseLog struct {
 	Datetime string `json:"date_time"`
 	Level    string `json:"level"`
-	Message  string `json:"message"`
+	//ログの種類
+	Kind string `json:"kind"`
+}
+
+func NewBaselog(level string) *BaseLog {
+	return &BaseLog{
+		Datetime: time.Now().Format("2006-01-02 15:04:05"),
+		Level:    level,
+		Kind:     "log",
+	}
+}
+
+func NewBaselogInfo() *BaseLog {
+	return NewBaselog("INFO")
+}
+
+func NewBaselogError() *BaseLog {
+	return NewBaselog("Error")
 }
 
 func ErrorLog(message string) {
-	baseLog("Error", message)
-}
-
-func baseLog(level, message string) {
-	l := &Log{
-		//2009-11-10 23:00:00
-		Datetime: time.Now().Format("2006-01-02 15:04:05"),
-		Level:    level,
-		Message:  message,
-	}
-
-	j, _ := json.Marshal(l)
-
+	j, _ := json.Marshal(NewLogError(message))
 	log.Print(string(j))
 }
 
 func InfoLog(message string) {
-	baseLog("INFO", message)
-}
+	j, _ := json.Marshal(NewLogInfo(message))
+	log.Print(string(j))
 
-type AccessLog struct {
-	Datetime string `json:"date_time"`
-	Level    string `json:"level"`
-	URL      string `json:"url"`
 }
 
 func OutputAccessLog(u *url.URL) {
-	l := &AccessLog{
-		Datetime: time.Now().Format("2006-01-02 15:04:05"),
-		Level:    "INFO",
-		URL:      u.String(),
-	}
-
-	j, _ := json.Marshal(l)
-
+	j, _ := json.Marshal(NewAccessLog(u))
 	log.Print(string(j))
 }
