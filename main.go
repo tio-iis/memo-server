@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,7 +14,8 @@ import (
 var htmlStr string
 
 func main() {
-	fmt.Println("start")
+	log.SetFlags(0)
+	InfoLog("start")
 
 	//http://localhost:8080/
 	http.HandleFunc("/", showHTML)
@@ -241,4 +243,32 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
+}
+
+type Log struct {
+	Datetime string `json:"date_time"`
+	Level    string `json:"level"`
+	Message  string `json:"message"`
+}
+
+func ErrorLog(message string) {
+	baseLog("Error", message)
+}
+
+func baseLog(level, message string) {
+	l := Log{
+		//2009-11-10 23:00:00
+		Datetime: time.Now().Format("2006-01-02 15:04:05"),
+		Level:    level,
+		Message:  message,
+	}
+
+	j, _ := json.Marshal(l)
+
+	log.Print(string(j))
+
+}
+
+func InfoLog(message string) {
+	baseLog("INFO", message)
 }
