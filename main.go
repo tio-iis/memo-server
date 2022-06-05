@@ -20,9 +20,8 @@ func main() {
 	//http://localhost:8080/
 	http.HandleFunc("/", showHTML)
 	http.HandleFunc("/add_memo", addMemo)
-	//http.HandleFunc("/list_memos", listMemos)
-	http.HandleFunc("/list_memos", SampleMiddleware(listMemos))
-	http.HandleFunc("/delete_memos", SampleMiddleware(deleteMemos))
+	http.HandleFunc("/list_memos", listMemos)
+	http.HandleFunc("/delete_memos", deleteMemos)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -203,8 +202,6 @@ func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
 //保存してあるメモの一覧をJSONで出力する。
 //curl localhost:8080/list_memos
 func listMemos(w http.ResponseWriter, r *http.Request) {
-	InfoLog("start handler")
-
 	b, err := json.Marshal(memos)
 	if err != nil {
 		RespondInternalServerError(w)
@@ -213,15 +210,6 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, string(b))
-	InfoLog("finish handler")
-}
-
-func SampleMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		InfoLog("start middleware")
-		h.ServeHTTP(w, r)
-		InfoLog("finish middleware")
-	}
 }
 
 //メモを削除する
