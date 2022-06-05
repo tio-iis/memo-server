@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -27,6 +28,8 @@ func main() {
 
 // curl localhost:8080/
 func showHTML(w http.ResponseWriter, r *http.Request) {
+	OutputAccessLog(r.URL)
+
 	data, err := os.ReadFile("index.html")
 	if err != nil {
 		RespondInternalServerError(w)
@@ -127,6 +130,8 @@ func NewErrorResponse(em []*ErrorMessage) *ErrorResponse {
 //メモを登録する。
 //curl -X POST -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
+	OutputAccessLog(r.URL)
+
 	//*を付けると、その型をポインタ型として定義できる。
 	//ポインタ型の変数を生成するには&を付ける必要がある。
 	//var m *Memo = &Memo{}
@@ -202,6 +207,8 @@ func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
 //保存してあるメモの一覧をJSONで出力する。
 //curl localhost:8080/list_memos
 func listMemos(w http.ResponseWriter, r *http.Request) {
+	OutputAccessLog(r.URL)
+
 	b, err := json.Marshal(memos)
 	if err != nil {
 		RespondInternalServerError(w)
@@ -215,6 +222,8 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 //メモを削除する
 //curl -X DELETE localhost:8080/delete_memos?id=1111,222222,333
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
+	OutputAccessLog(r.URL)
+
 	//メモが存在しない場合は何もせずに終わる
 	//TODO: あとでエラーハンドリングする
 	if len(memos) == 0 {
@@ -256,7 +265,7 @@ func ErrorLog(message string) {
 }
 
 func baseLog(level, message string) {
-	l := Log{
+	l := &Log{
 		//2009-11-10 23:00:00
 		Datetime: time.Now().Format("2006-01-02 15:04:05"),
 		Level:    level,
@@ -266,9 +275,26 @@ func baseLog(level, message string) {
 	j, _ := json.Marshal(l)
 
 	log.Print(string(j))
-
 }
 
 func InfoLog(message string) {
 	baseLog("INFO", message)
+}
+
+type AccessLog struct {
+	Datetime string `json:"date_time"`
+	Level    string `json:"level"`
+	URL      string `json:"url"`
+}
+
+func OutputAccessLog(u *url.URL) {
+	l := &AccessLog{
+		Datetime: time.Now().Format("2006-01-02 15:04:05"),
+		Level:    "INFO",
+		URL:      u.String(),
+	}
+
+	j, _ := json.Marshal(l)
+
+	log.Print(string(j))
 }
