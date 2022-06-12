@@ -312,17 +312,33 @@ func NewBaselogError() *BaseLog {
 	return NewBaselog("Error")
 }
 
+//エラーログ
+//ログレベル = Error
+//用途 = サーバ側でエラーが発生したときに利用する
 func ErrorLog(message string) {
 	j, _ := json.Marshal(NewLogError(message))
 	log.Print(string(j))
 }
 
+//警告ログ
+//ログレベル = Warning
+//用途 = HTTPリクエストに問題があったときに出力するログ
+//func WarningLog(message string) {
+//	j, _ := json.Marshal(NewLogError(message))
+//	log.Print(string(j))
+//}
+
+//インフォログ
+//ログレベル = INFO
+//用途 = エラーじゃないけど、ログを出力したいときに利用する
 func InfoLog(message string) {
 	j, _ := json.Marshal(NewLogInfo(message))
 	log.Print(string(j))
-
 }
 
+//アクセスログ
+//ログレベル = INFO
+//用途 = エンドポイントへのアクセスを記録するために利用する
 func OutputAccessLog(u *url.URL) {
 	j, _ := json.Marshal(NewAccessLog(u))
 	log.Print(string(j))
