@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -55,22 +54,28 @@ func (m *Memo) Validate() []*ErrorMessage {
 	//エラーメッセージを格納する string の配列を定義する
 	errMsgs := make([]*ErrorMessage, 0)
 
+	titleLength := len([]rune(m.Title))
+
 	//メモのタイトルが1文字未満、30文字より長い場合はエラーにする。
-	if len([]rune(m.Title)) < 1 || len([]rune(m.Title)) > 30 {
+	if titleLength < 1 || titleLength > 30 {
 		errMsgs = append(errMsgs, NewErrorMessage(
 			"InvalidTitle",
 			"タイトルの文字数は1文字以上30文字以下にしてください",
 		),
 		)
+		WarningLog(fmt.Sprintf("title length is invalid, title = %s, length = %d)", m.Title, titleLength))
 	}
 
+	bodyLength := len([]rune(m.Body))
+
 	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
-	if len([]rune(m.Body)) < 1 || len([]rune(m.Body)) > 100 {
+	if bodyLength < 1 || bodyLength > 100 {
 		errMsgs = append(errMsgs, NewErrorMessage(
 			"InvalidBody",
 			"本文の文字数は1文字以上100文字以下にしてください",
 		),
 		)
+		WarningLog(fmt.Sprintf("body length is invalid, body = %s, length = %d)", m.Body, bodyLength))
 	}
 
 	return errMsgs
@@ -221,36 +226,34 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 }
 
 //メモを削除する
-//curl -X DELETE localhost:8080/delete_memos?id=1111,222222,333
+//curl -X DELETE localhost:8080/delete_memos?id=1111
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
-	//メモが存在しない場合は何もせずに終わる
-	//TODO: あとでエラーハンドリングする
+	//登録済みのメモが存在しない場合は何もせずに終わる
 	if len(memos) == 0 {
+		WarningLog(fmt.Sprintf("memo is empty, length = %d", len(memos)))
 		RespondNotFoundError(w)
 		return
 	}
 
-	//TODO: 不要な実装をあとで削除する
 	id := r.URL.Query().Get("id")
-	ids := strings.Split(id, ",")
-	for _, id := range ids {
-		idInt, err := strconv.Atoi(id)
-		if err != nil {
-			//ID変換でエラーになったら処理を終わる
-			fmt.Fprintln(w, err.Error())
-			return
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		//string型のIDをintに変換できない場合は処理を終わる
+		WarningLog(fmt.Sprintf("memo id format is invalid, id = %s", id))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"MEMO_ID_FORMAT_IS_INVALID",
+				"対象のメモは存在しません。",
+			),
 		}
-
-		if _, yes := memos[idInt]; !yes {
-			//メモIDが存在しない場合は処理を終わる
-			fmt.Fprintln(w, fmt.Sprintf("not exist memo_id = %d", idInt))
-			return
-		}
-
-		delete(memos, idInt)
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
 	}
+
+	//TODO: メモがなかった場合にエラーハンドリングする
+	delete(memos, idInt)
 
 	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
 }
@@ -272,6 +275,13 @@ func NewLogInfo(message string) *Log {
 func NewLogError(message string) *Log {
 	return &Log{
 		BaseLog: NewBaselogError(),
+		Message: message,
+	}
+}
+
+func NewLogWarning(message string) *Log {
+	return &Log{
+		BaseLog: NewBaselogWarning(),
 		Message: message,
 	}
 }
@@ -310,7 +320,11 @@ func NewBaselogInfo() *BaseLog {
 }
 
 func NewBaselogError() *BaseLog {
-	return NewBaselog("Error")
+	return NewBaselog("ERROR")
+}
+
+func NewBaselogWarning() *BaseLog {
+	return NewBaselog("WARNING")
 }
 
 //エラーログ
@@ -323,11 +337,11 @@ func ErrorLog(message string) {
 
 //警告ログ
 //ログレベル = Warning
-//用途 = HTTPリクエストに問題があったときに出力するログ
-//func WarningLog(message string) {
-//	j, _ := json.Marshal(NewLogError(message))
-//	log.Print(string(j))
-//}
+//用途 = HTTPリクエストに問題があったときに出力するログ（バリデーション）
+func WarningLog(message string) {
+	j, _ := json.Marshal(NewLogWarning(message))
+	log.Print(string(j))
+}
 
 //インフォログ
 //ログレベル = INFO
