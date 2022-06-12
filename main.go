@@ -32,7 +32,7 @@ func showHTML(w http.ResponseWriter, r *http.Request) {
 
 	data, err := os.ReadFile("index.html")
 	if err != nil {
-		RespondInternalServerError(w)
+		RespondInternalServerError(w, err.Error())
 		return
 	}
 
@@ -140,7 +140,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	//HTTPリクエストで送信されてきた HTTP Request Body(JSON形式)を
 	//Memo構造体にセットしている。
 	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
-		RespondInternalServerError(w)
+		RespondInternalServerError(w, err.Error())
 		return
 	}
 
@@ -164,7 +164,8 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, len(memos))
 }
 
-func RespondInternalServerError(w http.ResponseWriter) {
+func RespondInternalServerError(w http.ResponseWriter, errorLogMessage string) {
+	ErrorLog(errorLogMessage)
 	RespondError(
 		w,
 		http.StatusInternalServerError,
@@ -211,7 +212,7 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(memos)
 	if err != nil {
-		RespondInternalServerError(w)
+		RespondInternalServerError(w, err.Error())
 		return
 
 	}
@@ -314,7 +315,7 @@ func NewBaselogError() *BaseLog {
 
 //エラーログ
 //ログレベル = Error
-//用途 = サーバ側でエラーが発生したときに利用する
+//用途 = サーバ側でエラーが発生したときに利用する（サーバが悪い）
 func ErrorLog(message string) {
 	j, _ := json.Marshal(NewLogError(message))
 	log.Print(string(j))
