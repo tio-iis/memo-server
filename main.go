@@ -107,6 +107,41 @@ func (m *Memo) Validate() []*ErrorMessage {
 // [333] => {ID:1111, Title:mytitle .... }
 var memos map[int]*Memo = map[int]*Memo{}
 
+var memosVersion2 *Memos = NewMemos()
+
+type Memos struct {
+	Memos []*Memo
+}
+
+func NewMemos() *Memos {
+	return &Memos{
+		Memos: []*Memo{},
+	}
+}
+
+func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
+	errMsg := m.Validate()
+
+	for _, memo := range ms.Memos {
+		if m.Title == memo.Title {
+			//タイトルが同じなのでエラーにする
+			errMsg = append(
+				errMsg,
+				NewErrorMessage("TItleIsDuplicated", "タイトルが重複しています。"),
+			)
+			break
+		}
+	}
+
+	if len(errMsg) > 0 {
+		return errMsg
+	}
+
+	ms.Memos = append(ms.Memos, m)
+
+	return nil
+}
+
 //Go言語では構造体や関数などの名前の先頭を大文字にするか小文字にするかで、
 //プログラムの挙動が変わります。
 //メモ帳アプリでは基本的に大文字にした方がよいです。
@@ -173,24 +208,24 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errMsgs := m.Validate()
+	//メモを保存する。
+	errMsgs := memosVersion2.AddMemo(m)
+
 	if len(errMsgs) > 0 {
 		// クライアント側から送信されるリクエストに問題があるので、
 		// HTTP Status 400 を返す。
 		// Go言語では定数としてHTTP Statusが用意されているので、
 		// それを利用するのがいいと思います。
 		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
+
+		WarningLog(fmt.Sprintf("invalid memo, error = %v", errMsgs))
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
 
-	//メモをmemosに保存する。
-	//Memo.IDをキーにしているので、IDが同じメモは上書きされる。
-	memos[m.ID] = m
-
 	//HTTP Response は空にするので、nilを指定する。
 	//len()は配列やマップなどの長さを出力することができる関数です。
-	fmt.Fprintln(w, len(memos))
+	fmt.Fprintln(w, len(memosVersion2.Memos))
 }
 
 func RespondInternalServerError(w http.ResponseWriter, errorLogMessage string) {
