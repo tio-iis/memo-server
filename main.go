@@ -29,6 +29,18 @@ func main() {
 func showHTML(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
+	if r.Method != http.MethodGet {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"INVALID_HTTP_METHOD",
+				"無効なリクエストです。",
+			),
+		}
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
+
 	data, err := os.ReadFile("index.html")
 	if err != nil {
 		RespondInternalServerError(w, err.Error())
@@ -137,6 +149,18 @@ func NewErrorResponse(em []*ErrorMessage) *ErrorResponse {
 func addMemo(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
+	if r.Method != http.MethodPost {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"INVALID_HTTP_METHOD",
+				"無効なリクエストです。",
+			),
+		}
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
+
 	//*を付けると、その型をポインタ型として定義できる。
 	//ポインタ型の変数を生成するには&を付ける必要がある。
 	//var m *Memo = &Memo{}
@@ -215,6 +239,18 @@ func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
 func listMemos(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
+	if r.Method != http.MethodGet {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"INVALID_HTTP_METHOD",
+				"無効なリクエストです。",
+			),
+		}
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
+
 	b, err := json.Marshal(memos)
 	if err != nil {
 		RespondInternalServerError(w, err.Error())
@@ -229,6 +265,18 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 //curl -X DELETE localhost:8080/delete_memos?id=1111
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
+
+	if r.Method != http.MethodDelete {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"INVALID_HTTP_METHOD",
+				"無効なリクエストです。",
+			),
+		}
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
 
 	//登録済みのメモが存在しない場合は何もせずに終わる
 	if len(memos) == 0 {
