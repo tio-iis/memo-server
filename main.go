@@ -72,7 +72,7 @@ func (m *Memo) Validate() []*ErrorMessage {
 	if titleLength < 1 || titleLength > 30 {
 		errMsgs = append(errMsgs, NewErrorMessage(
 			"InvalidTitle",
-			"タイトルの文字数は1文字以上30文字以下にしてください",
+			"タイトルの文字数は1文字以上30文字以下にしてください。",
 		),
 		)
 		WarningLog(fmt.Sprintf("title length is invalid, title = %s, length = %d)", m.Title, titleLength))
@@ -84,7 +84,7 @@ func (m *Memo) Validate() []*ErrorMessage {
 	if bodyLength < 1 || bodyLength > 100 {
 		errMsgs = append(errMsgs, NewErrorMessage(
 			"InvalidBody",
-			"本文の文字数は1文字以上100文字以下にしてください",
+			"本文の文字数は1文字以上100文字以下にしてください。",
 		),
 		)
 		WarningLog(fmt.Sprintf("body length is invalid, body = %s, length = %d)", m.Body, bodyLength))
@@ -129,6 +129,7 @@ func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
 				errMsg,
 				NewErrorMessage("TItleIsDuplicated", "タイトルが重複しています。"),
 			)
+			WarningLog(fmt.Sprintf("title is duplicated, title = %s", m.Title))
 			break
 		}
 	}
@@ -218,7 +219,8 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		// それを利用するのがいいと思います。
 		// https://developer.mozilla.org/ja/docs/Web/HTTP/Status/400
 
-		WarningLog(fmt.Sprintf("invalid memo, error = %v", errMsgs))
+		//警告ログはバリデーションするところで出力するので、
+		//ここでは出力しなくていい。
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
@@ -286,7 +288,7 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(memos)
+	b, err := json.Marshal(memosVersion2.Memos)
 	if err != nil {
 		RespondInternalServerError(w, err.Error())
 		return
