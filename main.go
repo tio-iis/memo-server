@@ -20,6 +20,7 @@ func main() {
 	//http://localhost:8080/
 	http.HandleFunc("/", showHTML)
 	http.HandleFunc("/add_memo", addMemo)
+	http.HandleFunc("/update_memo", updateMemo)
 	http.HandleFunc("/list_memos", listMemos)
 	http.HandleFunc("/delete_memos", deleteMemos)
 	http.ListenAndServe(":8080", nil)
@@ -171,10 +172,42 @@ func (ms *Memos) GetMemoByID(id int) *Memo {
 	return nil
 }
 
-func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
+func (ms *Memos) UpdateMemo(m *Memo) []*ErrorMessage {
+	if memo := ms.GetMemoByID(m.ID); memo == nil {
+		WarningLog(fmt.Sprintf("memo is not found = %d", m.ID))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"MEMO_ID_FORMAT_IS_INVALID",
+				"対象のメモは存在しません。",
+			),
+		}
+		return errMsgs
+	}
+
+	errMsg := ms.Validate(m)
+
+	if len(errMsg) > 0 {
+		return errMsg
+	}
+
+	for i, memo := range ms.Memos {
+		if memo.ID == m.ID {
+			ms.Memos[i] = m
+			break
+		}
+	}
+
+	return nil
+}
+
+func (ms *Memos) Validate(m *Memo) []*ErrorMessage {
 	errMsg := m.Validate()
 
 	for _, memo := range ms.Memos {
+		if m.ID == memo.ID {
+			//更新対象のメモとタイトルが同じでも問題ない
+			break
+		}
 		if m.Title == memo.Title {
 			//タイトルが同じなのでエラーにする
 			errMsg = append(
@@ -185,6 +218,11 @@ func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
 			break
 		}
 	}
+	return errMsg
+}
+
+func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
+	errMsg := ms.Validate(m)
 
 	if len(errMsg) > 0 {
 		return errMsg
@@ -279,6 +317,44 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 
 	//HTTP Response は空にするので、nilを指定する。
 	//len()は配列やマップなどの長さを出力することができる関数です。
+	fmt.Fprintln(w, len(memosVersion2.Memos))
+}
+
+//TODO: 動作確認をする。
+func updateMemo(w http.ResponseWriter, r *http.Request) {
+	OutputAccessLog(r.URL)
+
+	if r.Method != http.MethodPut {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs := []*ErrorMessage{
+			NewErrorMessage(
+				"INVALID_HTTP_METHOD",
+				"無効なリクエストです。",
+			),
+		}
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
+
+	m := &Memo{}
+
+	//HTTPリクエストで送信されてきた HTTP Request Body(JSON形式)を
+	//Memo構造体にセットしている。
+	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
+		RespondInternalServerError(w, err.Error())
+		return
+	}
+
+	//メモを保存する。
+	errMsgs := memosVersion2.UpdateMemo(m)
+
+	if len(errMsgs) > 0 {
+		//警告ログはバリデーションするところで出力するので、
+		//ここでは出力しなくていい。
+		RespondError(w, http.StatusBadRequest, errMsgs)
+		return
+	}
+
 	fmt.Fprintln(w, len(memosVersion2.Memos))
 }
 
