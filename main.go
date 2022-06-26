@@ -119,6 +119,28 @@ func NewMemos() *Memos {
 	}
 }
 
+func (ms *Memos) DeleteMemoByID(id int) {
+	position := 0
+	for i, m := range ms.Memos {
+		if m.ID == id {
+			position = i
+			break
+		}
+	}
+
+	ms.Memos[position] = ms.Memos[len(ms.Memos)-1]
+	ms.Memos = ms.Memos[:len(ms.Memos)-1]
+}
+
+func (ms *Memos) GetMemoByID(id int) *Memo {
+	for _, m := range ms.Memos {
+		if m.ID == id {
+			return m
+		}
+	}
+	return nil
+}
+
 func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
 	errMsg := m.Validate()
 
@@ -315,13 +337,6 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//登録済みのメモが存在しない場合は何もせずに終わる
-	if len(memos) == 0 {
-		WarningLog(fmt.Sprintf("memo is empty, length = %d", len(memos)))
-		RespondNotFoundError(w)
-		return
-	}
-
 	id := r.URL.Query().Get("id")
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
@@ -337,7 +352,13 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO: メモがなかった場合にエラーハンドリングする
+	m := memosVersion2.GetMemoByID(idInt)
+	if m == nil {
+		WarningLog(fmt.Sprintf("memo id = %d is empty", idInt))
+		RespondNotFoundError(w)
+		return
+	}
+
 	delete(memos, idInt)
 
 	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
