@@ -120,16 +120,46 @@ func NewMemos() *Memos {
 }
 
 func (ms *Memos) DeleteMemoByID(id int) {
-	position := 0
+	//以下のスライスを例にする
+	//[id=100（0番目）, id=200（1番目）, id=300（2番目）]
+	//削除対象はid=200（1番目）とする。
+
+	//削除対象のメモがMemosの何番目にあるか
+	//初期値として -1 を指定する。
+	position := -1
+
 	for i, m := range ms.Memos {
 		if m.ID == id {
+			//削除対象のメモがあったら、
+			//positionにi（スライスのインデックス）を代入する。
+			//
+			//positionには、id=200（1番目）の1という値が入る。
 			position = i
 			break
 		}
 	}
 
+	//positionの値に変化がない（メモが存在しない場合）は、
+	//削除処理をせずに return する。
+	//スライスは0番目から始まるので、
+	//positionの初期値が0だと上手く動かないので注意すること。
+	if position == -1 {
+		return
+	}
+
+	//Memosの一番最後の要素を削除対象の要素に上書きする。
+	//スライスは以下の状態になる。
+	//[id=100（0番目）, id=300（1番目）, id=300（2番目）]
 	ms.Memos[position] = ms.Memos[len(ms.Memos)-1]
-	ms.Memos = ms.Memos[:len(ms.Memos)-1]
+
+	//Memosの一番最後の要素以外のスライスをnewMemosに代入する。
+	//スライスの":"については補足ブログで取り上げます。
+	//newMemosのスライスは先頭の2つの要素のみ保持することになる。
+	//[id=100（0番目）, id=300（1番目）]
+	newMemos := ms.Memos[:len(ms.Memos)-1]
+
+	//newMemosをMemosに代入する。
+	ms.Memos = newMemos
 }
 
 func (ms *Memos) GetMemoByID(id int) *Memo {
@@ -359,7 +389,7 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	delete(memos, idInt)
+	memosVersion2.DeleteMemoByID(idInt)
 
 	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
 }
