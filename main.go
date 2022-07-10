@@ -30,6 +30,8 @@ func main() {
 func showHTML(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
+	// このエンドポイントはJSONを受け付けないので、
+	// ValidateHTTPRequest() は使えない。
 	if r.Method != http.MethodGet {
 		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
 		errMsgs := []*ErrorMessage{
@@ -94,21 +96,7 @@ func (m *Memo) Validate() []*ErrorMessage {
 	return errMsgs
 }
 
-//Goではコンストラクタの代わりに関数を利用して、
-//構造体のオブジェクトを生成する。
-//構造体を生成する関数の名前は New + 構造体名 にするのが一般的です。
-//ただ、今回は使いません。
-//func NewMemo() *Memo {
-//	return &Memo{}
-//}
-
-//Memo構造体をポインタ型として定義しています。
-// [1111] => {ID:1111, Title:mytitle .... }
-// [222] => {ID:1111, Title:mytitle .... }
-// [333] => {ID:1111, Title:mytitle .... }
-var memos map[int]*Memo = map[int]*Memo{}
-
-var memosVersion2 *Memos = NewMemos()
+var memos *Memos = NewMemos()
 
 type Memos struct {
 	Memos []*Memo
@@ -279,19 +267,35 @@ func NewErrorResponse(em []*ErrorMessage) *ErrorResponse {
 	}
 }
 
+func ValidateHTTPRequest(r *http.Request, validHTTPMethod string) []*ErrorMessage {
+	errMsgs := make([]*ErrorMessage, 0)
+
+	if c := r.Header.Get("Content-Type"); c != "application/json" {
+		WarningLog(fmt.Sprintf("invalid content-type = %s", c))
+		errMsgs = append(errMsgs, NewErrorMessage(
+			"INVALID_CONTENT_TYPE",
+			"無効なContent-Typeです。",
+		),
+		)
+	}
+
+	if r.Method != validHTTPMethod {
+		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
+		errMsgs = append(errMsgs, NewErrorMessage(
+			"INVALID_HTTP_METHOD",
+			"無効なHTTP Methodです。",
+		))
+	}
+
+	return errMsgs
+}
+
 //メモを登録する。
 //curl -X POST -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/add_memo
 func addMemo(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
-	if r.Method != http.MethodPost {
-		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
-		errMsgs := []*ErrorMessage{
-			NewErrorMessage(
-				"INVALID_HTTP_METHOD",
-				"無効なリクエストです。",
-			),
-		}
+	if errMsgs := ValidateHTTPRequest(r, http.MethodPost); len(errMsgs) > 0 {
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
@@ -309,7 +313,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//メモを保存する。
-	errMsgs := memosVersion2.AddMemo(m)
+	errMsgs := memos.AddMemo(m)
 
 	if len(errMsgs) > 0 {
 		// クライアント側から送信されるリクエストに問題があるので、
@@ -326,21 +330,14 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 
 	//HTTP Response は空にするので、nilを指定する。
 	//len()は配列やマップなどの長さを出力することができる関数です。
-	fmt.Fprintln(w, len(memosVersion2.Memos))
+	fmt.Fprintln(w, len(memos.Memos))
 }
 
 //curl -X PUT -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle2","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/update_memo
 func updateMemo(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
-	if r.Method != http.MethodPut {
-		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
-		errMsgs := []*ErrorMessage{
-			NewErrorMessage(
-				"INVALID_HTTP_METHOD",
-				"無効なリクエストです。",
-			),
-		}
+	if errMsgs := ValidateHTTPRequest(r, http.MethodPut); len(errMsgs) > 0 {
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
@@ -355,7 +352,7 @@ func updateMemo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//メモを保存する。
-	errMsgs := memosVersion2.UpdateMemo(m)
+	errMsgs := memos.UpdateMemo(m)
 
 	if len(errMsgs) > 0 {
 		//警告ログはバリデーションするところで出力するので、
@@ -364,7 +361,7 @@ func updateMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, len(memosVersion2.Memos))
+	fmt.Fprintln(w, len(memos.Memos))
 }
 
 func RespondInternalServerError(w http.ResponseWriter, errorLogMessage string) {
@@ -413,19 +410,12 @@ func RespondError(w http.ResponseWriter, httpStatus int, e []*ErrorMessage) {
 func listMemos(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
-	if r.Method != http.MethodGet {
-		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
-		errMsgs := []*ErrorMessage{
-			NewErrorMessage(
-				"INVALID_HTTP_METHOD",
-				"無効なリクエストです。",
-			),
-		}
+	if errMsgs := ValidateHTTPRequest(r, http.MethodGet); len(errMsgs) > 0 {
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
 
-	b, err := json.Marshal(memosVersion2.Memos)
+	b, err := json.Marshal(memos.Memos)
 	if err != nil {
 		RespondInternalServerError(w, err.Error())
 		return
@@ -440,14 +430,7 @@ func listMemos(w http.ResponseWriter, r *http.Request) {
 func deleteMemos(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
-	if r.Method != http.MethodDelete {
-		WarningLog(fmt.Sprintf("invalid http method = %s", r.Method))
-		errMsgs := []*ErrorMessage{
-			NewErrorMessage(
-				"INVALID_HTTP_METHOD",
-				"無効なリクエストです。",
-			),
-		}
+	if errMsgs := ValidateHTTPRequest(r, http.MethodDelete); len(errMsgs) > 0 {
 		RespondError(w, http.StatusBadRequest, errMsgs)
 		return
 	}
@@ -467,14 +450,14 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m := memosVersion2.GetMemoByID(idInt)
+	m := memos.GetMemoByID(idInt)
 	if m == nil {
 		WarningLog(fmt.Sprintf("memo id = %d is empty", idInt))
 		RespondNotFoundError(w)
 		return
 	}
 
-	memosVersion2.DeleteMemoByID(idInt)
+	memos.DeleteMemoByID(idInt)
 
 	fmt.Fprintln(w, "memo_id = "+id+" is deleted")
 }
