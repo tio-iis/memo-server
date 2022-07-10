@@ -224,6 +224,15 @@ func (ms *Memos) Validate(m *Memo) []*ErrorMessage {
 func (ms *Memos) AddMemo(m *Memo) []*ErrorMessage {
 	errMsg := ms.Validate(m)
 
+	if memo := ms.GetMemoByID(m.ID); memo != nil {
+		errMsg = append(
+			errMsg,
+			NewErrorMessage("IDIsDuplicated", "IDが重複しています。"),
+		)
+		WarningLog(fmt.Sprintf("id is duplicated, id = %d", m.ID))
+
+	}
+
 	if len(errMsg) > 0 {
 		return errMsg
 	}
@@ -320,7 +329,7 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, len(memosVersion2.Memos))
 }
 
-//TODO: 動作確認をする。
+//curl -X PUT -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle2","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/update_memo
 func updateMemo(w http.ResponseWriter, r *http.Request) {
 	OutputAccessLog(r.URL)
 
