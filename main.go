@@ -19,6 +19,8 @@ func main() {
 
 	//http://localhost:8080/
 	http.HandleFunc("/", showHTML)
+	http.HandleFunc("/favicon.ico", func (w http.ResponseWriter, r *http.Request) {
+	})
 	http.HandleFunc("/add_memo", addMemo)
 	http.HandleFunc("/update_memo", updateMemo)
 	http.HandleFunc("/list_memos", listMemos)
