@@ -222,16 +222,29 @@
 
       const memo = Memo.createNewMemo(title, body)
 
-      this.#pushMemo(memo)
-
       //メモをバックエンドサーバに送信する
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
+        //非同期で実行される
         //バックエンドサーバからのレスポンスが返ってくる
         console.log(req)
-        if (req.status == 400) {
-          alert("400 error")
+
+        if (req.stats == 200) {
+          this.#pushMemo(memo)
+          addModal.hide()
+          return
         }
+
+        const errors = JSON.parse(req.responseText).errors
+        console.log(errors)
+        var errStr = ""
+        Object.values(errors).forEach((error) => {
+          console.log(error.message)
+          errStr = errStr + error.message + "<br>"
+        })
+
+        validationErrorInAddModal.innerHTML = errStr
+        validationErrorInAddModal.style.display = ""
       })
       req.open("POST", "http://localhost:8080/add_memo")
       req.setRequestHeader("Content-Type", "application/json")
@@ -388,16 +401,17 @@
     const title = titleInAddModal.value
     const body = bodyInAddModal.value
 
-    const errStr = memos.addMemo(title, body)
-    if (errStr.length > 0) {
-      //エラーがあるので、addModal.hile() をせずに return する。
-      validationErrorInAddModal.innerHTML = errStr
-      validationErrorInAddModal.style.display = ""
-      return
-    }
+    memos.addMemo(title, body)
+    //const errStr = memos.addMemo(title, body)
+    //if (errStr.length > 0) {
+    //  //エラーがあるので、addModal.hile() をせずに return する。
+    //  validationErrorInAddModal.innerHTML = errStr
+    //  validationErrorInAddModal.style.display = ""
+    //  return
+    //}
 
     //エラーがない場合はモーダルを閉じて終わる。
-    addModal.hide()
+    //addModal.hide()
   })
 
   const addButton = document.getElementById("id-add-button")
