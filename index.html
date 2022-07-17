@@ -214,12 +214,6 @@
     }
 
     addMemo(title, body) {
-      //この時点で登録されるメモに id はないので、-1 を指定する。
-      //const errStr = this.#validateMemo(-1, title, body)
-      //if (errStr.length > 0) {
-      //  return errStr
-      //}
-
       const memo = Memo.createNewMemo(title, body)
 
       //メモをバックエンドサーバに送信する
@@ -227,21 +221,21 @@
       req.addEventListener("load", () => {
         //非同期で実行される
         //バックエンドサーバからのレスポンスが返ってくる
-        console.log(req)
-
-        if (req.stats == 200) {
+        if (req.status == 200) {
           this.#pushMemo(memo)
           addModal.hide()
           return
         }
 
         const errors = JSON.parse(req.responseText).errors
-        console.log(errors)
         var errStr = ""
         Object.values(errors).forEach((error) => {
-          console.log(error.message)
           errStr = errStr + error.message + "<br>"
         })
+
+        if (req.status == 500) {
+          errStr = "エラーが発生しました。<br>もう一度操作してください。"
+        }
 
         validationErrorInAddModal.innerHTML = errStr
         validationErrorInAddModal.style.display = ""
@@ -274,11 +268,15 @@
         return
       }
 
-      deleteTarget.delete()
-
       //削除エンドポイントを叩く
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
+        if (req.status == 200) {
+          deleteTarget.delete()
+          return
+        }
+
+        alert("エラーが発生しました。画面を再読み込みしてください。")
       })
       req.open("DELETE", "http://localhost:8080/delete_memos?id=" + deleteTarget.id)
       req.setRequestHeader("Content-Type", "application/json")
