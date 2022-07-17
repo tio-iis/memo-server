@@ -161,33 +161,33 @@
     }
 
 
-    #validateMemo(id, title, body) {
-      var errStr = ""
-      if (title.length < 1 || title.length > Memo.MaxTitleLength) {
-        errStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
-      }
+    //#validateMemo(id, title, body) {
+    //  var errStr = ""
+    //  if (title.length < 1 || title.length > Memo.MaxTitleLength) {
+    //    errStr = "タイトルの文字数は1文字以上30文字以下にしてください。<br>"
+    //  }
 
-      if (body.length < 1 || body.length > Memo.MaxBodyLength) {
-        errStr = errStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
-      }
+    //  if (body.length < 1 || body.length > Memo.MaxBodyLength) {
+    //    errStr = errStr + "本文の文字数は1文字以上100文字以下にしてください。<br>"
+    //  }
 
-      this.#memos.forEach((m) => {
-        if (m.id == id) {
-          return
-        }
-        if (m.title == title) {
-          errStr = "すでに登録済みのタイトルです。<br>"
-        }
-      })
+    //  this.#memos.forEach((m) => {
+    //    if (m.id == id) {
+    //      return
+    //    }
+    //    if (m.title == title) {
+    //      errStr = "すでに登録済みのタイトルです。<br>"
+    //    }
+    //  })
 
-      return errStr
-    }
+    //  return errStr
+    //}
 
     updateMemo(id, title, body) {
-      const errStr = this.#validateMemo(id, title, body)
-      if (errStr.length > 0) {
-        return errStr
-      }
+      //const errStr = this.#validateMemo(id, title, body)
+      //if (errStr.length > 0) {
+      //  return errStr
+      //}
 
       const memo = this.#getMemoById(id)
       memo.update(title, body)
@@ -215,10 +215,10 @@
 
     addMemo(title, body) {
       //この時点で登録されるメモに id はないので、-1 を指定する。
-      const errStr = this.#validateMemo(-1, title, body)
-      if (errStr.length > 0) {
-        return errStr
-      }
+      //const errStr = this.#validateMemo(-1, title, body)
+      //if (errStr.length > 0) {
+      //  return errStr
+      //}
 
       const memo = Memo.createNewMemo(title, body)
 
@@ -227,6 +227,11 @@
       //メモをバックエンドサーバに送信する
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
+        //バックエンドサーバからのレスポンスが返ってくる
+        console.log(req)
+        if (req.status == 400) {
+          alert("400 error")
+        }
       })
       req.open("POST", "http://localhost:8080/add_memo")
       req.setRequestHeader("Content-Type", "application/json")
