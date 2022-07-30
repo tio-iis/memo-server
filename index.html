@@ -130,6 +130,11 @@
 
       const req = new XMLHttpRequest()
       req.addEventListener("load", () => {
+        if (req.status != 200) {
+          alert("エラーが発生しました。再読み込みしてください。")
+          return
+        }
+
         //取得したメモ一覧をHTMLにしていく。
         const memos = JSON.parse(req.responseText)
         Object.values(memos).forEach((memoFromBackendServer) => {
