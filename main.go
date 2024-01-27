@@ -330,8 +330,8 @@ func addMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//HTTP Response は空にするので、nilを指定する。
-	fmt.Fprintln(w, nil)
+	//HTTP Response は空にするので、空文字を指定する。
+	fmt.Fprintln(w, "")
 }
 
 //curl -X PUT -H "Content-Type: application/json" -d '{"ID":1111,"Title":"mytitle2","Body":"mybody","CreatedAt":"2022-01-01T10:00:00+09:00","UpdatedAt":"2022-01-01T11:00:00+09:00"}' localhost:8080/update_memo
@@ -362,7 +362,7 @@ func updateMemo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, nil)
+	fmt.Fprintln(w, "")
 }
 
 func RespondInternalServerError(w http.ResponseWriter, errorLogMessage string) {
@@ -460,7 +460,7 @@ func deleteMemos(w http.ResponseWriter, r *http.Request) {
 
 	memos.DeleteMemoByID(idInt)
 
-	fmt.Fprintln(w, nil)
+	fmt.Fprintln(w, "")
 }
 
 type Log struct {
