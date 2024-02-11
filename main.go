@@ -86,7 +86,7 @@ func (m *Memo) Validate() []*ErrorMessage {
 	bodyLength := len([]rune(m.Body))
 
 	//メモの本文が1文字未満、100文字より長い場合はエラーにする。
-	if bodyLength < 1 || bodyLength > 500 {
+	if bodyLength < 1 || bodyLength > 100 {
 		errMsgs = append(errMsgs, NewErrorMessage(
 			"InvalidBody",
 			"本文の文字数は1文字以上100文字以下にしてください。",
